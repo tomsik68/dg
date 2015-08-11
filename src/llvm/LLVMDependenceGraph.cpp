@@ -19,6 +19,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include "LLVMDependenceGraph.h"
+#include "ValueFlow.h"
 
 using llvm::errs;
 using std::make_pair;
@@ -79,6 +80,9 @@ bool LLVMDependenceGraph::build(llvm::Module *m, llvm::Function *entry)
 
     // build recursively DG from entry point
     build(entry);
+
+    analysis::LLVMValueFlowAnalysis VF(this);
+    VF.run();
 };
 
 bool

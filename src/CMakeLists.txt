@@ -10,6 +10,8 @@ add_library(llvmdg SHARED
 	llvm/LLVMNode.h
 	llvm/LLVMDependenceGraph.h
 	llvm/LLVMDependenceGraph.cpp
+	llvm/ValueFlow.h
+	llvm/ValueFlow.cpp
 )
 
 target_link_libraries(llvmdg ${llvm_libs})
