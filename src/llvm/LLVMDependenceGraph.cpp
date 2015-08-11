@@ -26,6 +26,32 @@ using std::make_pair;
 
 namespace dg {
 
+LLVMNode **LLVMNode::findOperands()
+{
+    using namespace llvm;
+    const Value *val = getKey();
+
+    if (const AllocaInst *Inst = dyn_cast<AllocaInst>(val)) {
+        operands = new LLVMNode *[1];
+        operands[0] = dg->getNode(val);
+        operands_num = 1;
+    } else if (const StoreInst *Inst = dyn_cast<StoreInst>(val)) {
+        operands = new LLVMNode *[2];
+        operands[0] = dg->getNode(Inst->getPointerOperand());
+        operands[1] = dg->getNode(Inst->getValueOperand());
+        operands_num = 2;
+        assert(operands[0] && "StoreInst pointer operand without node");
+        if (!operands[1]) {
+            errs() << "WARN: StoreInst value operand without node: "
+                   << *Inst->getValueOperand() << "\n";
+        }
+    } else if (const LoadInst *Inst = dyn_cast<LoadInst>(val)) {
+        operands = new LLVMNode *[1];
+        operands[0] = dg->getNode(Inst->getPointerOperand());
+        operands_num = 1;
+    }
+}
+
 /// ------------------------------------------------------------------
 //  -- LLVMDependenceGraph
 /// ------------------------------------------------------------------
