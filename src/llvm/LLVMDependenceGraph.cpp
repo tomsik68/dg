@@ -49,6 +49,28 @@ LLVMNode **LLVMNode::findOperands()
         operands = new LLVMNode *[1];
         operands[0] = dg->getNode(Inst->getPointerOperand());
         operands_num = 1;
+    } else if (const GetElementPtrInst *Inst = dyn_cast<GetElementPtrInst>(val)) {
+        operands = new LLVMNode *[1];
+        operands[0] = dg->getNode(Inst->getPointerOperand());
+        operands_num = 1;
+    } else if (const CallInst *Inst = dyn_cast<CallInst>(val)) {
+        // we store the called function as a first operand
+        // and all the arguments as the other operands
+        operands_num = Inst->getNumArgOperands() + 1;
+        operands = new LLVMNode *[operands_num];
+        operands[0] = dg->getNode(Inst->getCalledValue());
+        for (int i = 0; i < operands_num - 1; ++i)
+            operands[i + 1] = dg->getNode(Inst->getArgOperand(i));
+    } else if (const ReturnInst *Inst = dyn_cast<ReturnInst>(val)) {
+        operands = new LLVMNode *[1];
+        operands[0] = dg->getNode(Inst->getReturnValue());
+        operands_num = 1;
+    } else if (const CastInst *Inst = dyn_cast<CastInst>(val)) {
+        operands = new LLVMNode *[1];
+        operands[0] = dg->getNode(Inst->stripPointerCasts());
+        if (!operands[0])
+            errs() << "WARN: CastInst with unstrippable pointer cast" << *Inst << "\n";
+        operands_num = 1;
     }
 }
 
@@ -456,7 +478,7 @@ void LLVMDependenceGraph::addFormalParameters()
         return;
 
     LLVMDGParameters *params = new LLVMDGParameters();
-    entryNode->addParameters(params);
+    setParameters(params);
 
     LLVMNode *in, *out;
     for (auto I = func->arg_begin(), E = func->arg_end();

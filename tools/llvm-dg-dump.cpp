@@ -7,6 +7,7 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/raw_os_ostream.h>
 #include <llvm/IRReader/IRReader.h>
@@ -34,6 +35,14 @@ static std::ostream& printLLVMVal(std::ostream& os, const llvm::Value *val)
         ro << *val;
 
     return os;
+}
+
+static std::ostream& operator<<(std::ostream& os, const Offset& off)
+{
+    if (off.offset == UNKNOWN_OFFSET)
+        os << "UNKNOWN";
+    else
+        os << off.offset;
 }
 
 static bool checkNode(std::ostream& os, LLVMNode *node)
@@ -75,6 +84,47 @@ static bool checkNode(std::ostream& os, LLVMNode *node)
         if(p->getBasicBlock() != node->getBasicBlock()) {
             os << "\\nERR: pred BB mismatch";
             err = true;
+        }
+    }
+
+    if (node->hasUnknownValue()) {
+        os << "\\lUNKNOWN VALUE";
+    } else {
+        const ValuesSetT& vals = node->getValues();
+        for (auto it : vals) {
+                os << "\\lVAL: [";
+                printLLVMVal(os, it->getKey());
+                os << "]";
+        }
+
+        const PointsToSetT& ptsto = node->getPointsTo();
+        for (auto it : ptsto) {
+            os << "\\lPTR: [";
+            printLLVMVal(os, it.obj->node->getKey());
+            os << "] + " << it.offset;
+        }
+
+        MemoryObj *mo = node->getMemoryObj();
+        if (mo) {
+            for (auto it : mo->values) {
+                for (auto it2 : it.second) {
+                    os << "\\l--MEMVAL: [" << it.first << "] = ";
+                    printLLVMVal(os, it2->getKey());
+                }
+            }
+
+            for (auto it : mo->pointsTo) {
+                for(auto it2 : it.second) {
+                    os << "\\l--MEMPTR: [" << it.first << "] -> ";
+                    printLLVMVal(os, it2.obj->node->getKey());
+                    os << "] + " << it2.offset;
+                }
+            }
+        } else {
+            if (llvm::isa<llvm::AllocaInst>(val)) {
+                os << "\\nERR: alloca without memObject";
+                err = true;
+            }
         }
     }
 
