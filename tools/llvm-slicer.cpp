@@ -181,7 +181,7 @@ public:
         LLVMNode *node = nullptr;
         for (auto it : getConstructedFunctions()) {
             LLVMDependenceGraph *sub = it.second;
-            node = sub->getNode(I);
+            node = sub->getNode(const_cast<llvm::Instruction *>(I));
             if (node)
                 break;
         }
@@ -201,7 +201,7 @@ public:
         for (auto it : getConstructedFunctions()) {
             LLVMDependenceGraph *sub = it.second;
             auto cb = sub->getBlocks();
-            LLVMBBlock *BB = cb[B];
+            LLVMBBlock *BB = cb[const_cast<llvm::BasicBlock *>(B)];
             if (BB) {
                 if (opts & ANNOTATE_POSTDOM) {
                     for (LLVMBBlock *p : BB->getPostDomFrontiers())
