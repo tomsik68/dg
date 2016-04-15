@@ -738,8 +738,8 @@ PSSNode *LLVMPSSBuilder::createPtrToInt(const llvm::Instruction *Inst)
     // just casting the value do gep with unknown offset -
     // this way we cover any shift of the pointer due to arithmetic
     // operations
-    // PSSNode *node = new PSSNode(pss::CAST, op1);
-    PSSNode *node = new PSSNode(pss::GEP, op1, UNKNOWN_OFFSET);
+    //PSSNode *node = new PSSNode(pss::GEP, op1, UNKNOWN_OFFSET);
+    PSSNode *node = new PSSNode(pss::CAST, op1);
 
     addNode(Inst, node);
 
@@ -765,6 +765,37 @@ PSSNode *LLVMPSSBuilder::createIntToPtr(const llvm::Instruction *Inst)
 
     PSSNode *node = new PSSNode(pss::CAST, op1);
 
+    addNode(Inst, node);
+
+    assert(node);
+    return node;
+}
+
+PSSNode *LLVMPSSBuilder::createArithmeticOp(const llvm::Instruction *Inst)
+{
+    using namespace llvm;
+
+    const Value *ptrOp = Inst->getOperand(0);
+    const Value *val = nullptr;
+    uint64_t size = UNKNOWN_OFFSET;
+
+    // if we know what is the shift in add,
+    // try to add it, otherwise just set UNKNOWN_OFFSET
+    switch(Inst->getOpcode()) {
+        case Instruction::Add:
+            val = Inst->getOperand(1);
+            break;
+        default:
+            break;
+    }
+
+    if (val) {
+        if (const ConstantInt *C = dyn_cast<ConstantInt>(val))
+            size = C->getLimitedValue();
+    }
+
+    PSSNode *op = getOperand(ptrOp);
+    PSSNode *node = new PSSNode(pss::GEP, op, size);
     addNode(Inst, node);
 
     assert(node);
@@ -888,6 +919,14 @@ LLVMPSSBuilder::buildInstruction(const llvm::Instruction& Inst)
             break;
         case Instruction::IntToPtr:
             node = createIntToPtr(&Inst);
+            break;
+        // FIXME: this won't be ever called,
+        // since Add won't be build as irrelevant
+        // instruction...
+        case Instruction::Add:
+        case Instruction::Mul:
+        case Instruction::Sub:
+            node = createArithmeticOp(&Inst);
             break;
         case Instruction::Ret:
             node = createReturn(&Inst);
