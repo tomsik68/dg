@@ -1,34 +1,28 @@
 language: cpp
+sudo: false
 
-# use Ubuntu 14.04
-dist: trusty
+#env:
+#matrix:
+    #- COMPILER=g++
+    #- COMPILER=clang++
 
-compiler:
-  - clang
-  - gcc
-
+git:
+  depth: 1
 addons:
- apt:
-  sources:
-   - llvm-toolchain-precise-3.8
-   - ubuntu-toolchain-r-test
-  packages:
-   - libllvm3.8
-   - libllvm3.8-dbg
-   - llvm-3.8
-   - llvm-3.8-dev
-   - llvm-3.8-runtime
-   - gcc-4.8
-   - g++-4.8
-   - clang
-   - cmake
-
+  apt:
+    sources:
+      # newer gcc and clang
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.8
+    packages:
+      - gcc-5
+      - clang-3.8
 
 before_script:
   - mkdir build
   - cd build
-  - cmake .. -DLLVM_DIR=/usr/local/share/llvm-3.4/cmake
+  - cmake .. #-DCMAKE_CXX_COMPILER=${COMPILER}
 
 script:
-  - make
+  - make -j2
   - make test
