@@ -290,6 +290,11 @@ dumpPointerSubgraphdot(LLVMPointerAnalysis *pta, PTType type)
             printf("------\\n");
         }
 
+        if (verbose) {
+            printf("queued: %u\\n", node->queued);
+            printf("------\\n");
+        }
+
         for (const Pointer& ptr : node->pointsTo) {
             printf("\\n    -> ");
             printName(ptr.target, true);
@@ -341,6 +346,10 @@ dumpPointerSubgraph(LLVMPointerAnalysis *pta, PTType type, bool todot)
             dumpPSNode(node, type);
         }
     }
+}
+
+void dump_iter(void *pta) {
+    dumpPointerSubgraphdot(static_cast<LLVMPointerAnalysis *>(pta), FLOW_SENSITIVE);
 }
 
 int main(int argc, char *argv[])
@@ -409,6 +418,8 @@ int main(int argc, char *argv[])
     }
 
     // run the analysis
+    //static_cast<LLVMPointerAnalysisImpl<analysis::pta::PointsToFlowSensitive> *>(PA.get())->func = dump_iter;
+    //static_cast<LLVMPointerAnalysisImpl<analysis::pta::PointsToFlowSensitive> *>(PA.get())->data = &PTA;
     PA->run();
 
     tm.stop();

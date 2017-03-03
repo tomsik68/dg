@@ -18,57 +18,58 @@ public:
 
     // this is an easy but not very efficient implementation,
     // works for testing
-    PointsToFlowSensitive(PointerSubgraph *ps) : PointerAnalysis(ps,
-                                                 UNKNOWN_OFFSET, false) {}
+    PointsToFlowSensitive(PointerSubgraph *ps)
+    : PointerAnalysis(ps, UNKNOWN_OFFSET, false) {}
+
+    static bool canChangeMM(PSNode *n) {
+        if (n->predecessorsNum() == 0 || // root node
+            n->getType() == pta::STORE ||
+            n->getType() == pta::MEMCPY)
+            return true;
+
+        return false;
+    }
 
     virtual void beforeProcessed(PSNode *n)
     {
         MemoryMapT *mm = n->getData<MemoryMapT>();
-        if (!mm) {
-            // on these nodes the memory map can change
-            if (n->predecessorsNum() == 0) { // root node
-                // FIXME: we're leaking the memory maps
-                mm = new MemoryMapT();
-            } else if (n->getType() == pta::STORE) {
-                mm = new MemoryMapT();
+        if (mm)
+            return;
 
-                // create empty memory object so that STORE can
-                // store the pointers into it
-                for (const Pointer& ptr : n->getOperand(1)->pointsTo) {
-                    // FIXME: we're leaking the mem. objects, use autoptr?
-                    (*mm)[ptr].insert(new MemoryObject(ptr.target));
-                }
-            }  else if (n->getType() == pta::MEMCPY) {
-                mm = new MemoryMapT();
+        // on these nodes the memory map can change
+        if (canChangeMM(n)) { // root node
+            // FIXME: we're leaking the memory maps
+            mm = new MemoryMapT();
+        } else if (n->predecessorsNum() > 1) {
+            // this is a join node, create a new map and
+            // merge the predecessors to it
+            mm = new MemoryMapT();
 
-                // create empty memory object so that MEMCPY can
-                // store the pointers into it
-                for (const Pointer& ptr : n->getOperand(1)->pointsTo) {
-                    // FIXME: we're leaking the mem. objects, use autoptr?
-                    (*mm)[ptr].insert(new MemoryObject(ptr.target));
-                }
-            } else if (n->predecessorsNum() > 1) {
-                // this is a join node, create new map and
-                // merge the predecessors to it
-                mm = new MemoryMapT();
-
-                // merge information from predecessors into new map
-                for (PSNode *p : n->getPredecessors()) {
-                    MemoryMapT *pm = p->getData<MemoryMapT>();
-                    // merge pm to mm (if pm was already created)
-                    if (pm)
-                        mergeMaps(mm, pm, nullptr);
-                }
-            } else {
-                PSNode *pred = n->getSinglePredecessor();
-                mm = pred->getData<MemoryMapT>();
-                assert(mm && "No memory map in the predecessor");
+            // merge information from predecessors into the new map
+            // XXX: this is necessary also with the merge in afterProcess,
+            // because this copies the information even for single
+            // predecessor, whereas afterProcessed copies the
+            // information only for two or more predecessors
+            for (PSNode *p : n->getPredecessors()) {
+                MemoryMapT *pm = p->getData<MemoryMapT>();
+                // merge pm to mm (if pm was already created)
+                if (pm)
+                    mergeMaps(mm, pm, nullptr);
             }
-
-            // memory map initialized, set it as data,
-            // so that we won't initialize it again
-            n->setData<MemoryMapT>(mm);
+        } else {
+            // this node can not change the memory map,
+            // so just add a pointer from the predecessor
+            // to this map
+            PSNode *pred = n->getSinglePredecessor();
+            mm = pred->getData<MemoryMapT>();
+            assert(mm && "No memory map in the predecessor");
         }
+
+        assert(mm && "Did not create the MM");
+
+        // memory map initialized, set it as data,
+        // so that we won't initialize it again
+        n->setData<MemoryMapT>(mm);
     }
 
     virtual void afterProcessed(PSNode *n)
@@ -89,15 +90,15 @@ public:
         // more of them (if there's just one predecessor
         // and this is not a store, the memory map couldn't
         // change, so we don't have to do that)
-        if (n->predecessorsNum() > 1 || strong_update
-            || n->getType() == pta::MEMCPY) {
+       // if (n->predecessorsNum() > 1 || strong_update
+       //     || n->getType() == pta::MEMCPY) {
             for (PSNode *p : n->getPredecessors()) {
                 MemoryMapT *pm = p->getData<MemoryMapT>();
                 // merge pm to mm (if pm was already created)
                 if (pm)
                     mergeMaps(mm, pm, strong_update);
             }
-        }
+        //}
     }
 
     virtual void getMemoryObjects(PSNode *where, const Pointer& pointer,
@@ -107,18 +108,30 @@ public:
         assert(mm && "Node does not have memory map");
 
         auto bounds = getObjectRange(mm, pointer);
-        for (MemoryMapT::iterator I = bounds.first;
-             I != bounds.second; ++I) {
+        for (MemoryMapT::iterator I = bounds.first; I != bounds.second; ++I) {
             assert(I->first.target == pointer.target
                     && "Bug in getObjectRange");
 
             for (MemoryObject *mo : I->second)
                 objects.push_back(mo);
         }
+
+        assert(bounds.second->first.target != pointer.target
+                && "Bug in getObjectRange");
+
+        // if we haven't found any memory object, but this psnode
+        // is a write to memory, create a new one, so that
+        // the write has something to write to
+        if (objects.empty() && canChangeMM(where)) {
+            MemoryObject *mo = new MemoryObject(pointer.target);
+            (*mm)[pointer].insert(mo);
+            objects.push_back(mo);
+        }
     }
 
 protected:
-    PointsToFlowSensitive() {}
+
+    PointsToFlowSensitive() = default;
 
 private:
 

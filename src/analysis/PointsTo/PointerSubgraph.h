@@ -81,6 +81,7 @@ class PSNode : public SubgraphNode<PSNode>
     bool is_heap;
     unsigned int dfsid;
 public:
+    unsigned queued = 0;
     ///
     // Construct a PSNode
     // \param t     type of the node

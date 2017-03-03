@@ -53,8 +53,7 @@ public:
         assert(PS && "Need valid PointerSubgraph object");
 
         // compute the strongly connected components
-        if (prepro_geps)
-        {
+        if (prepro_geps) {
             SCC<PSNode> scc_comp;
             SCCs = std::move(scc_comp.compute(PS->getRoot()));
         }
@@ -77,11 +76,6 @@ public:
     }
     */
 
-    virtual void enqueue(PSNode *n)
-    {
-        changed.push_back(n);
-    }
-
     /* hooks for analysis - optional */
     virtual void beforeProcessed(PSNode *n)
     {
@@ -92,6 +86,8 @@ public:
     {
         (void) n;
     }
+
+    virtual void afterIteration() {}
 
     PointerSubgraph *getPS() const { return PS; }
 
@@ -112,6 +108,11 @@ public:
         }
     }
 
+    virtual void enqueue(PSNode *n)
+    {
+        changed.push_back(n);
+    }
+
     void run()
     {
         PSNode *root = PS->getRoot();
@@ -130,6 +131,7 @@ public:
             changed.clear();
 
             for (PSNode *cur : to_process) {
+                ++cur->queued;
                 beforeProcessed(cur);
 
                 if (processNode(cur))
@@ -138,17 +140,22 @@ public:
                 afterProcessed(cur);
             }
 
+            to_process.clear();
+
             if (!changed.empty()) {
-                to_process.clear();
-                to_process = PS->getNodes(nullptr /* starting node */,
-                                          &changed /* starting set */,
-                                          last_processed_num /* expected num */);
+                to_process = std::move(PS->getNodes(nullptr /* starting node */,
+                                                    &changed /* starting set */,
+                                                    last_processed_num /* expected num */));
 
                 // since changed was not empty,
                 // the to_process must not be empty too
                 assert(!to_process.empty());
+                assert(to_process.size() >= changed.size());
             }
-        } while (!changed.empty());
+        } while (!to_process.empty());
+
+        assert(to_process.empty());
+        assert(changed.empty());
     }
 
     // generic error

@@ -37,6 +37,13 @@
 #include "analysis/PointsTo/PointerSubgraph.h"
 #include "PointerSubgraph.h"
 
+void dump(dg::analysis::pta::PSNode *n)
+{
+    llvm::Value *v = n->getUserData<llvm::Value>();
+    if (v)
+        v->dump();
+}
+
 namespace dg {
 namespace analysis {
 namespace pta {
