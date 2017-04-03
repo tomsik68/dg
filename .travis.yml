@@ -10,18 +10,13 @@ addons:
     sources:
       # newer gcc and clang
       - ubuntu-toolchain-r-test
-      - sourceline: 'ppa:george-edison55/cmake-3.x'
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main'
-        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
-      - gcc-5
-      - cmake
-      - llvm-3.9-dev
-      - clang-3.9
+      - g++-5
+      - llvm-dev
       - libz-dev
 
 before_script:
-  - cmake .
+  - cmake . -DCMAKE_CXX_COMPILER=g++-5
 
 script:
   - make -j2
