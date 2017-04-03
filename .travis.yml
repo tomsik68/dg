@@ -13,11 +13,13 @@ addons:
     sources:
       # newer gcc and clang
       - ubuntu-toolchain-r-test
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
+      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main'
+        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
       - gcc-5
       - llvm-3.9
       - clang-3.9
+      - libz-dev
 
 before_script:
   - mkdir build
