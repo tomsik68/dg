@@ -16,6 +16,7 @@ addons:
         key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
       - gcc-5
+      - cmake
       - llvm-3.9-dev
       - clang-3.9
       - libz-dev
