@@ -1,9 +1,7 @@
 language: cpp
 sudo: false
 
-matrix:
-    - CXX=g++
-    - CXX=clang++-3.9
+dist: trusty
 
 git:
   depth: 1
