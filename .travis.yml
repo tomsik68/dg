@@ -1,10 +1,9 @@
 language: cpp
 sudo: false
 
-#env:
-#matrix:
-    #- COMPILER=g++
-    #- COMPILER=clang++
+matrix:
+    - CXX=g++
+    - CXX=clang++-3.9
 
 git:
   depth: 1
@@ -22,9 +21,7 @@ addons:
       - libz-dev
 
 before_script:
-  - mkdir build
-  - cd build
-  - cmake .. #-DCMAKE_CXX_COMPILER=${COMPILER}
+  - cmake .
 
 script:
   - make -j2
