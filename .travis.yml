@@ -1,8 +1,14 @@
 language: cpp
-sudo: required
+sudo: false
 
 dist: trusty
 
+env:
+    - LLVM_CONFIG=llvm-config-3.9
+
+compiler:
+    - clang++-3.9
+    - g++-5
 git:
   depth: 1
 addons:
@@ -19,8 +25,7 @@ addons:
       - libz-dev
 
 before_script:
-  - sudo apt-get -yq --force-yes remove llvm-3.5-dev clang-3.5
-  - cmake . -DCMAKE_CXX_COMPILER=clang++-3.9
+  - cmake . -DLLVM_CONFIG=$(which ${LLVM_CONFIG})
 
 script:
   - make -j2
