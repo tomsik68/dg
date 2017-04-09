@@ -28,7 +28,8 @@ SCENARIO( "LIFO" ) {
                 REQUIRE(queue.pop() == 2);
                 REQUIRE(queue.pop() == 2);
                 REQUIRE(queue.pop() == 4);
-                REQUIRE(queue.pop() == 13);
+                // XXX 14 is intentionally wrong to demonstrate catch error reporting
+                REQUIRE(queue.pop() == 14);
                 REQUIRE(queue.pop() == 1);
 
                 THEN( "queue is empty" ) {
