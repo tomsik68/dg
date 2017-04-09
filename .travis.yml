@@ -19,7 +19,7 @@ addons:
       - libz-dev
 
 before_script:
-  - sudo apt-get -yq --force-yes remove llvm-dev clang
+  - sudo apt-get -yq --force-yes remove llvm-3.5-dev clang-3.5
   - cmake . -DCMAKE_CXX_COMPILER=clang++-3.9
 
 script:
