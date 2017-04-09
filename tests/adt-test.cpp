@@ -1,8 +1,7 @@
-#include <assert.h>
 #include <cstdarg>
 #include <cstdio>
-
-#include "test-runner.h"
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
 
 #include "ADT/Queue.h"
 
@@ -11,57 +10,60 @@ using namespace dg::ADT;
 namespace dg {
 namespace tests {
 
-class TestLIFO : public Test
-{
-public:
-    TestLIFO() : Test("LIFO test")
-    {}
-
-    void test()
-    {
+SCENARIO( "LIFO" ) {
+    GIVEN( "empty LIFO" ) {
         QueueLIFO<int> queue;
-        check(queue.empty(), "empty queue not empty");
+        THEN( "is empty" ) {
+            REQUIRE( queue.empty() );
+        }
 
+        WHEN( "elements are pushed" ) {
+            queue.push(1);
+            queue.push(13);
+            queue.push(4);
+            queue.push(2);
+            queue.push(2);
+
+            WHEN( "elements are popped" ) {
+                REQUIRE(queue.pop() == 2);
+                REQUIRE(queue.pop() == 2);
+                REQUIRE(queue.pop() == 4);
+                REQUIRE(queue.pop() == 13);
+                REQUIRE(queue.pop() == 1);
+
+                THEN( "queue is empty" ) {
+                    REQUIRE(queue.empty());
+                }
+            }
+        }
+
+    }
+}
+
+TEST_CASE( "FIFO test" ) {
+    QueueFIFO<int> queue;
+
+    SECTION( "empty" ) {
+        REQUIRE(queue.empty());
+    }
+
+    SECTION( "push and pop" ) {
         queue.push(1);
         queue.push(13);
         queue.push(4);
-        queue.push(2);
-        queue.push(2);
-
-        check(queue.pop() == 2, "Wrong pop order");
-        check(queue.pop() == 2, "Wrong pop order");
-        check(queue.pop() == 4, "Wrong pop order");
-        check(queue.pop() == 13, "Wrong pop order");
-        check(queue.pop() == 1, "Wrong pop order");
-        check(queue.empty(), "emptied queue not empty");
-    }
-};
-
-class TestFIFO : public Test
-{
-public:
-    TestFIFO() : Test("FIFO test")
-    {}
-
-    void test()
-    {
-        QueueFIFO<int> queue;
-        check(queue.empty(), "empty queue not empty");
-
-        queue.push(1);
-        queue.push(13);
-        queue.push(4);
         queue.push(4);
         queue.push(2);
 
-        check(queue.pop() == 1, "Wrong pop order");
-        check(queue.pop() == 13, "Wrong pop order");
-        check(queue.pop() == 4, "Wrong pop order");
-        check(queue.pop() == 4, "Wrong pop order");
-        check(queue.pop() == 2, "Wrong pop order");
-        check(queue.empty(), "emptied queue not empty");
+        SECTION( "pop order" ) {
+            REQUIRE(queue.pop() == 1);
+            REQUIRE(queue.pop() == 13);
+            REQUIRE(queue.pop() == 4);
+            REQUIRE(queue.pop() == 4);
+            REQUIRE(queue.pop() == 2);
+            REQUIRE(queue.empty());
+        }
     }
-};
+}
 
 struct mycomp
 {
@@ -71,45 +73,34 @@ struct mycomp
     }
 };
 
-class TestPrioritySet : public Test
-{
-public:
-    TestPrioritySet() : Test("test priority set")
-    {}
-
-    void test()
-    {
+SCENARIO( "PrioritySet" ) {
+    GIVEN( "empty PrioritySet" ) {
         PrioritySet<int, mycomp> queue;
-        check(queue.empty(), "empty queue not empty");
-
-        queue.push(1);
-        queue.push(13);
-        queue.push(4);
-        queue.push(4);
-        queue.push(2);
-
-        // we inserted twice, but it is a set
-        check(queue.size() == 4, "BUG in size");
-
-        check(queue.pop() == 13, "Wrong pop order");
-        check(queue.pop() == 4, "Wrong pop order");
-        check(queue.pop() == 2, "Wrong pop order");
-        check(queue.pop() == 1, "Wrong pop order");
-        check(queue.empty(), "emptied queue not empty");
+        THEN( "it must be empty" ) {
+            REQUIRE(queue.empty());
+        }
+        WHEN( "elements are pushed in queue" ) {
+            queue.push(1);
+            queue.push(13);
+            queue.push(4);
+            queue.push(4);
+            queue.push(2);
+            THEN( "set size must be 4" ) {
+                REQUIRE(queue.size() == 4);
+            }
+            WHEN( "elements are popped" ) {
+                REQUIRE(queue.pop() == 13);
+                REQUIRE(queue.pop() == 4);
+                REQUIRE(queue.pop() == 2);
+                REQUIRE(queue.pop() == 1);
+                THEN( "queue must be empty" ) {
+                    REQUIRE(queue.empty());
+                }
+            }
+        }
     }
-};
+}
 
 }; // namespace tests
 }; // namespace dg
 
-int main()
-{
-    using namespace dg::tests;
-    TestRunner Runner;
-
-    Runner.add(new TestLIFO());
-    Runner.add(new TestFIFO());
-    Runner.add(new TestPrioritySet());
-
-    return Runner();
-}
