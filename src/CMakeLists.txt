@@ -17,6 +17,8 @@ add_library(RD SHARED
 	analysis/Offset.h
 	analysis/ReachingDefinitions/ReachingDefinitions.h
 	analysis/ReachingDefinitions/ReachingDefinitions.cpp
+    analysis/ReachingDefinitions/semisparse/ReachingDefinitionsSemisparse.h
+    analysis/ReachingDefinitions/semisparse/ReachingDefinitionsSemisparse.cpp
 	analysis/ReachingDefinitions/RDMap.h
 	analysis/ReachingDefinitions/RDMap.cpp
 )

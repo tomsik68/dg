@@ -8,7 +8,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Constants.h>
 
-#include "analysis/ReachingDefinitions/ReachingDefinitions.h"
+#include "analysis/ReachingDefinitions/semisparse/ReachingDefinitionsSemisparse.h"
 #include "llvm/analysis/PointsTo/PointsTo.h"
 
 namespace dg {
@@ -116,7 +116,7 @@ private:
 class LLVMReachingDefinitions
 {
     std::unique_ptr<LLVMRDBuilder> builder;
-    std::unique_ptr<ReachingDefinitionsAnalysis> RDA;
+    std::unique_ptr<ReachingDefinitionsSemisparse> RDA;
     RDNode *root;
     bool strong_update_unknown;
     uint32_t max_set_size;
@@ -133,8 +133,8 @@ public:
     void run()
     {
         root = builder->build();
-        RDA = std::unique_ptr<ReachingDefinitionsAnalysis>(
-            new ReachingDefinitionsAnalysis(root, strong_update_unknown, max_set_size)
+        RDA = std::unique_ptr<ReachingDefinitionsSemisparse>(
+            new ReachingDefinitionsSemisparse(root, strong_update_unknown, max_set_size)
             );
         RDA->run();
     }
