@@ -14,18 +14,20 @@ namespace rd {
 class RDNode;
 class ReachingDefinitionsAnalysis;
 
+template< typename T >
 inline bool
-intervalsDisjunctive(uint64_t a1, uint64_t a2,
-                     uint64_t b1, uint64_t b2)
+intervalsDisjunctive(T a1, T a2,
+                     T b1, T b2)
 {
     // XXX: does this work if a2 or b2 is UNKNOWN_OFFSET??
     // think it through
     return ((a1 <= b1) ? (a2 < b1) : (b2 < a1));
 }
 
+template< typename T >
 inline bool
-intervalsOverlap(uint64_t a1, uint64_t a2,
-                 uint64_t b1, uint64_t b2)
+intervalsOverlap(T a1, T a2,
+                 T b1, T b2)
 {
     return !intervalsDisjunctive(a1, a2, b1, b2);
 }
