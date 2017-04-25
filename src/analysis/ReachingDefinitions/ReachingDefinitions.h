@@ -54,29 +54,24 @@ public:
     RDNode(RDNodeType t = NONE) : type(t), dfsid(0) {}
 
     // this is the gro of this node, so make it public
-    // Def -> Use information, all updates
+    // set of variables defined by this node
     DefSiteSetT defs;
     // this is a subset of defs that are strong update
     // on this node
     DefSiteSetT overwrites;
 
     // Use -> Def information
-    // set of all nodes that define this use node
-    // basically inverted graph of the one created by @defs
-    DefSiteSetT use_def;
-    // Use -> Def overwrites
-    DefSiteSetT ud_overwrites;
+    // all nodes that define a variable used by this node
+    std::vector<RDNode *> use_def;
 
     RDMap def_map;
-    RDMap use_map;
 
     RDNodeType getType() const { return type; }
     DefSiteSetT& getDefines() { return defs; }
     DefSiteSetT& getOverwrites() { return overwrites; }
     const DefSiteSetT& getDefines() const { return defs; }
 
-    DefSiteSetT& getUses() { return use_def; }
-    const DefSiteSetT& getUsesOverwrites() const { return ud_overwrites; }
+    std::vector<RDNode *> getUses() { return use_def; }
 
     bool defines(RDNode *target, const Offset& off = UNKNOWN_OFFSET) const
     {
@@ -97,13 +92,9 @@ public:
         return false;
     }
 
-    void addUse(const DefSite& ds, bool strong_update = false) {
-        // FIXME update the use map
-        //use_map.update(std::forward<DefSite>(ds), this);
-        use_def.insert(ds);
-
-        if (strong_update)
-            ud_overwrites.insert(ds);
+    void addUse(RDNode *node)
+    {
+        use_def.push_back(node);
     }
 
     void addDef(const DefSite& ds, bool strong_update = false)
