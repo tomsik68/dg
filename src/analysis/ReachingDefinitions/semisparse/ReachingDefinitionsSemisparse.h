@@ -138,7 +138,8 @@ public:
         // std::vector<RDNode *> to_process = filterMemAccess(all_nodes);
 
         // assemble Use-Def graph to be used with the analysis
-        UdgAssembler ua(dfsnum);
+        /* UdgAssembler ua(dfsnum); */
+        UdgAssembler ua;
         ua.assemble(root);
 
         // do fixpoint

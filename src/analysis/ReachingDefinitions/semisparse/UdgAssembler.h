@@ -14,7 +14,6 @@ namespace rd {
 class UdgAssembler
 {
 
-    unsigned int dfsnum;
 
     void process(RDNode *node) {
         assert(node && "Node cannot be null");
@@ -28,7 +27,7 @@ class UdgAssembler
 
     }
 public:
-    UdgAssembler(int dfsnum) : dfsnum(dfsnum) {}
+    //UdgAssembler(int dfsnum) : dfsnum(dfsnum) {}
 
     /**
      * Assembles Use -> Def graph from a Def -> Use graph
@@ -39,19 +38,19 @@ public:
     void assemble(RDNode *root) {
         assert(root && "Root cannot be null");
 
-        ++dfsnum;
+        std::set<RDNode *> visited;
 
         ADT::QueueFIFO<RDNode *> fifo;
         fifo.push(root);
-        root->dfsid = dfsnum;
+        visited.insert(root);
 
         while(!fifo.empty()) {
             RDNode *cur = fifo.pop();
+            // TODO use extremely sophisticated way of handling dfsnum
             process(cur);
 
             for (RDNode *succ : cur->successors) {
-                if (succ->dfsid != dfsnum) {
-                    succ->dfsid = dfsnum;
+                if (visited.insert(succ).second) {
                     fifo.push(succ);
                 }
             }
