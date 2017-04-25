@@ -25,7 +25,7 @@ struct Offset
         return *this;
     }
 
-    Offset operator+(const Offset& o)
+    Offset operator+(const Offset& o) const
     {
         if (offset == UNKNOWN_OFFSET || o.offset == UNKNOWN_OFFSET)
             return UNKNOWN_OFFSET;
