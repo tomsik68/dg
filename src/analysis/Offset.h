@@ -38,9 +38,29 @@ struct Offset
         return offset < o.offset;
     }
 
+    bool operator>(const Offset& o) const
+    {
+        return offset > o.offset;
+    }
+
     bool operator==(const Offset& o) const
     {
         return offset == o.offset;
+    }
+
+    bool operator!=(const Offset& o) const
+    {
+        return !(*this == o);
+    }
+
+    bool operator<=(const Offset& o) const
+    {
+        return !(*this > o);
+    }
+
+    bool operator>=(const Offset& o) const
+    {
+        return !(*this < o);
     }
 
     bool inRange(uint64_t from, uint64_t to) const
