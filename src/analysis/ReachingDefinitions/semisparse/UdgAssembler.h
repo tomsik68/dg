@@ -3,6 +3,7 @@
 
 #include "../ReachingDefinitions.h"
 #include "../../BFS.h"
+#include <iostream>
 
 namespace dg {
 namespace analysis {
@@ -13,18 +14,66 @@ namespace rd {
  */
 class UdgAssembler
 {
+    void dumpDs(const DefSite& ds) {
+        std::cout << "DefSite( " << ds.target << ", " << ds.len.offset << ", " << ds.offset.offset << ")" << std::endl;
+    }
+    // find intersections between DefSites of @node and @curr
+    // and add use->def edges as necessary
+    void construct(RDNode *node, RDNode *curr) {
+        // at this point, @curr is reachable from @node.
+        // for ALLOC node @node, add edge from @curr to @node
+        // if @curr re-defines @node
+        if (node->type == RDNodeType::ALLOC || node->type == RDNodeType::DYN_ALLOC) {
+            for(const DefSite& currDs : curr->getDefines()) {
+                if (currDs.target == node) {
+                    std::cout << "found overlap with alloca" << std::endl;
+                    curr->addUse(node);
+                }
+            }
+            // for COPY, LOAD add an edge from @curr to @node
+            // if @curr re-defines @node
+            // FIXME edges from store nodes need to be labeled
+            // by a variable(maybe use DefSite)
+        } else {
+            // find overlaps in definitions
+            for (const DefSite& nodeDs : node->getDefines()) {
+                for (const DefSite& currDs : curr->getDefines()) {
+                    dumpDs(nodeDs);
+                    dumpDs(currDs);
+                    if (nodeDs.overlaps(currDs) || currDs.target == node) {
+                        std::cout << "overlap!" << std::endl;
+                        // and add a use-def edge
+                        curr->addUse(node);
+                    }
+                }
+            }
+        } 
+    }
 
-
+    // BFS search nodes reachable from @node, find definition intersection with @node, add use->def edge
     void process(RDNode *node) {
         assert(node && "Node cannot be null");
 
-        // for every node defined by this node
-        for (const DefSite& ds : node->getDefines()) {
-            // tell the DUG child node it is defined by this node
-            assert( ds.target && "DefSite must have a target" );
-            ds.target->addUse(DefSite(node, ds.offset, ds.len));
+        std::cout << "RDNode type: " << node->type << std::endl;
+        std::set<RDNode *> visited;
+        ADT::QueueFIFO<RDNode *> fifo;
+        // do NOT push node to fifo.
+        // as all @node's DefSite-s overlap with themselves, that would create a Use -> Def edge to itself
+        // for every node with at least one DefSite. that is something we do not need
+        for(RDNode *succ : node->successors) {
+            fifo.push(succ);
+            visited.insert(succ);
         }
-
+        while(!fifo.empty()) {
+            RDNode *curr = fifo.pop();
+            construct(node, curr);
+            // continue BFS
+            for(RDNode *succ : curr->successors) {
+                if (visited.insert(succ).second) {
+                    fifo.push(succ);
+                }
+            }
+        }
     }
 public:
     //UdgAssembler(int dfsnum) : dfsnum(dfsnum) {}
