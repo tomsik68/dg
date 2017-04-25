@@ -50,6 +50,21 @@ struct DefSite
                 : target < oth.target;
     }
 
+    /**
+     * Returns true if this DefSite overlaps with @oth,
+     * false otherwise
+     */
+    bool overlaps(const DefSite& oth) const
+    {
+        // TODO: handle unknowns appropriately
+        return target == oth.target && (intervalsOverlap(
+                offset, offset + len,
+                oth.offset, oth.offset + oth.len
+                ) || offset.isUnknown() || len.isUnknown() ||
+                    oth.offset.isUnknown() || oth.len.isUnknown());
+
+    }
+
     // what memory this node defines
     RDNode *target;
     // on what offset
