@@ -22,7 +22,7 @@ class UdgAssembler
         // at this point, @curr is reachable from @node.
         // for ALLOC node @node, add edge from @curr to @node
         // if @curr re-defines @node
-        if (node->type == RDNodeType::ALLOC || node->type == RDNodeType::DYN_ALLOC) {
+        if (node->type == RDNodeType::ALLOC || node->type == RDNodeType::DYN_ALLOC || node->type == RDNodeType::PHI || node->type == STORE || node->type == CALL_RETURN) {
             for(const DefSite& currDs : curr->getDefines()) {
                 if (currDs.target == node) {
                     std::cout << "found overlap with alloca" << std::endl;
