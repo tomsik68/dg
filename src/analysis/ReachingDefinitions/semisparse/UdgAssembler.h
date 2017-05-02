@@ -29,6 +29,12 @@ class UdgAssembler
                     curr->addUse(node);
                 }
             }
+            for(const DefSite& currDs : curr->getOverwrites()) {
+                if (currDs.target == node) {
+                    std::cout << "found overlap with alloca" << std::endl;
+                    curr->addUse(node);
+                }
+            }
             // for COPY, LOAD add an edge from @curr to @node
             // if @curr re-defines @node
             // FIXME edges from store nodes need to be labeled
@@ -37,6 +43,17 @@ class UdgAssembler
             // find overlaps in definitions
             for (const DefSite& nodeDs : node->getDefines()) {
                 for (const DefSite& currDs : curr->getDefines()) {
+                    dumpDs(nodeDs);
+                    dumpDs(currDs);
+                    if (nodeDs.overlaps(currDs) || currDs.target == node) {
+                        std::cout << "overlap!" << std::endl;
+                        // and add a use-def edge
+                        curr->addUse(node);
+                    }
+                }
+                // TODO why does this produce different results?
+                // is @overwrites not *subset* of @defines?
+                for (const DefSite& currDs : curr->getOverwrites()) {
                     dumpDs(nodeDs);
                     dumpDs(currDs);
                     if (nodeDs.overlaps(currDs) || currDs.target == node) {
