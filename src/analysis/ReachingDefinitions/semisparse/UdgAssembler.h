@@ -2,7 +2,6 @@
 #define _DG_UDG_ASSEMBLER_H_
 
 #include "../ReachingDefinitions.h"
-#include "../../BFS.h"
 #include <iostream>
 
 namespace dg {
