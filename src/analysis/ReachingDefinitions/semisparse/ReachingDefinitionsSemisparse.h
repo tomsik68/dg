@@ -134,13 +134,10 @@ public:
 
         std::vector<RDNode *> to_process = getNodes(root);
         std::vector<RDNode *> changed;
-        // TODO analyse only nodes that access memory
-        // std::vector<RDNode *> to_process = filterMemAccess(all_nodes);
 
         // assemble Use-Def graph to be used with the analysis
-        /* UdgAssembler ua(dfsnum); */
         UdgAssembler ua;
-        ua.assemble(root);
+        ua.assemble(to_process);
 
         // do fixpoint
         do {
