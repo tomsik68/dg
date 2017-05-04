@@ -223,8 +223,11 @@ dumpRDdot(LLVMReachingDefinitions *RD)
     for (RDNode *node : nodes) {
         for (RDNode *succ : node->getSuccessors())
             printf("\tNODE%p -> NODE%p [penwidth=2]\n", node, succ);
-        for (RDNode *pred : node->getUses())
-            printf("\tNODE%p -> NODE%p [style=\"dashed\",penwidth=2]\n", node, pred);
+        for (const auto& pair: node->getUses()) {
+            const RDNode *const pred = pair.first;
+            bool strong = pair.second;
+            printf("\tNODE%p -> NODE%p [style=\"dashed\",label=\"%d\",penwidth=2]\n", node, pred, strong);
+        }
     }
 
     printf("}\n");

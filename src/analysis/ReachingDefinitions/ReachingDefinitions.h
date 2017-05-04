@@ -1,7 +1,7 @@
 #ifndef _DG_REACHING_DEFINITIONS_ANALYSIS_H_
 #define _DG_REACHING_DEFINITIONS_ANALYSIS_H_
 
-#include <vector>
+#include <map>
 #include <set>
 #include <cassert>
 #include <cstring>
@@ -62,16 +62,17 @@ public:
 
     // Use -> Def information
     // all nodes that define a variable used by this node
-    std::vector<RDNode *> use_def;
+    std::map<RDNode *, bool> use_def;
 
     RDMap def_map;
 
     RDNodeType getType() const { return type; }
     DefSiteSetT& getDefines() { return defs; }
-    DefSiteSetT& getOverwrites() { return overwrites; }
     const DefSiteSetT& getDefines() const { return defs; }
+    DefSiteSetT& getOverwrites() { return overwrites; }
+    const DefSiteSetT& getOverwrites() const { return overwrites; }
 
-    std::vector<RDNode *> getUses() { return use_def; }
+    std::map<RDNode *,bool> getUses() { return use_def; }
 
     bool defines(RDNode *target, const Offset& off = UNKNOWN_OFFSET) const
     {
@@ -92,9 +93,9 @@ public:
         return false;
     }
 
-    void addUse(RDNode *node)
+    void addUse(RDNode *node, bool strong_update)
     {
-        use_def.push_back(node);
+        use_def[node] = strong_update;
     }
 
     void addDef(const DefSite& ds, bool strong_update = false)

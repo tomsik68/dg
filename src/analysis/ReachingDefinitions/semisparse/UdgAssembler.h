@@ -2,7 +2,7 @@
 #define _DG_UDG_ASSEMBLER_H_
 
 #include "../ReachingDefinitions.h"
-#include <iostream>
+#include <set>
 #include <vector>
 
 namespace dg {
@@ -14,8 +14,6 @@ namespace rd {
  */
 class UdgAssembler
 {
-    void dumpDs(const DefSite& ds) {
-        std::cout << "DefSite( " << ds.target << ", " << ds.len.offset << ", " << ds.offset.offset << ")" << std::endl;
     /**
      * Returns true if @node accesses memory and needs to be analyzed
      * false otherwise
@@ -25,6 +23,15 @@ class UdgAssembler
         auto it = mem_types.find(node->type);
         return (it != mem_types.end());
     }
+
+    /**
+     * Return true if update of @ds in @node is a strong update
+     * false otherwise
+     */
+    inline bool isStrong(const RDNode *const node, const DefSite& ds) const {
+        return node->getOverwrites().find(ds) != node->getOverwrites().end();
+    }
+
     // find intersections between DefSites of @node and @curr
     // and add use->def edges as necessary
     void process(RDNode *node, RDNode *curr) {
@@ -34,14 +41,10 @@ class UdgAssembler
         if (isMemoryNode(node)) {
             for(const DefSite& currDs : curr->getDefines()) {
                 if (currDs.target == node) {
-                    std::cout << "found overlap with alloca" << std::endl;
-                    curr->addUse(node);
-                }
-            }
-            for(const DefSite& currDs : curr->getOverwrites()) {
-                if (currDs.target == node) {
-                    std::cout << "found overlap with alloca" << std::endl;
-                    curr->addUse(node);
+                    // TODO strong update overwrites predecessors
+                    // weak update merges from predecessors
+                    bool strong = isStrong(curr, currDs);
+                    curr->addUse(node, strong);
                 }
             }
             // for COPY, LOAD add an edge from @curr to @node
@@ -64,7 +67,6 @@ public:
                 process(node, curr);
             }
         }
-
     }
 };
 

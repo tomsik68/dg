@@ -12,13 +12,16 @@ bool ReachingDefinitionsSemisparse::processNode(RDNode *node)
     bool changed = false;
 
     // merge maps from predecessors
-    for (RDNode *pred : node->use_def)
+    for (const auto& pair : node->use_def) {
+        RDNode *pred = pair.first;
+        bool strong = pair.second;
         changed |= node->def_map.merge(&(pred->def_map),
                                        &node->overwrites, /* strong update */
                                        strong_update_unknown,
                                        max_set_size /* max size of set of reaching definition
                                                        of one definition site */,
                                        true /* merge unknown */);
+    }
 
     return changed;
 }
