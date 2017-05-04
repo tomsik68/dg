@@ -39,31 +39,7 @@ class UdgAssembler
             // if @curr re-defines @node
             // FIXME edges from store nodes need to be labeled
             // by a variable(maybe use DefSite)
-        } else {
-            // find overlaps in definitions
-            for (const DefSite& nodeDs : node->getDefines()) {
-                for (const DefSite& currDs : curr->getDefines()) {
-                    dumpDs(nodeDs);
-                    dumpDs(currDs);
-                    if (nodeDs.overlaps(currDs) || currDs.target == node) {
-                        std::cout << "overlap!" << std::endl;
-                        // and add a use-def edge
-                        curr->addUse(node);
-                    }
-                }
-                // TODO why does this produce different results?
-                // is @overwrites not *subset* of @defines?
-                for (const DefSite& currDs : curr->getOverwrites()) {
-                    dumpDs(nodeDs);
-                    dumpDs(currDs);
-                    if (nodeDs.overlaps(currDs) || currDs.target == node) {
-                        std::cout << "overlap!" << std::endl;
-                        // and add a use-def edge
-                        curr->addUse(node);
-                    }
-                }
-            }
-        } 
+        }
     }
 
     // BFS search nodes reachable from @node, find definition intersection with @node, add use->def edge
