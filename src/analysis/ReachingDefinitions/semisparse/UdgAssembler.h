@@ -15,6 +15,14 @@ class UdgAssembler
 {
     void dumpDs(const DefSite& ds) {
         std::cout << "DefSite( " << ds.target << ", " << ds.len.offset << ", " << ds.offset.offset << ")" << std::endl;
+    /**
+     * Returns true if @node accesses memory and needs to be analyzed
+     * false otherwise
+     */
+    static inline bool isMemoryNode(const RDNode *const node) {
+        std::set<RDNodeType> mem_types{RDNodeType::ALLOC, RDNodeType::DYN_ALLOC, RDNodeType::PHI, RDNodeType::STORE, RDNodeType::CALL_RETURN};
+        auto it = mem_types.find(node->type);
+        return (it != mem_types.end());
     }
     // find intersections between DefSites of @node and @curr
     // and add use->def edges as necessary
@@ -22,7 +30,7 @@ class UdgAssembler
         // at this point, @curr is reachable from @node.
         // for ALLOC node @node, add edge from @curr to @node
         // if @curr re-defines @node
-        if (node->type == RDNodeType::ALLOC || node->type == RDNodeType::DYN_ALLOC || node->type == RDNodeType::PHI || node->type == STORE || node->type == CALL_RETURN) {
+        if (isMemoryNode(node)) {
             for(const DefSite& currDs : curr->getDefines()) {
                 if (currDs.target == node) {
                     std::cout << "found overlap with alloca" << std::endl;
