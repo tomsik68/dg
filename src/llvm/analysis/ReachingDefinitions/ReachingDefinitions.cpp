@@ -43,13 +43,13 @@ namespace dg {
 namespace analysis {
 namespace rd {
 
-static uint64_t getAllocatedSize(llvm::Type *Ty, const llvm::DataLayout *DL)
+static uint64_t getAllocatedSize(llvm::Type *Ty, const llvm::DataLayout &DL)
 {
     // Type can be i8 *null or similar
     if (!Ty->isSized())
             return 0;
 
-    return DL->getTypeAllocSize(Ty);
+    return DL.getTypeAllocSize(Ty);
 }
 
 // FIXME: don't duplicate the code (with PSS.cpp)
@@ -97,8 +97,6 @@ static int getMemAllocationFunc(const llvm::Function *func)
 
 
 LLVMRDBuilder::~LLVMRDBuilder() {
-    // delete data layout
-    delete DL;
 
     // delete artificial nodes from subgraphs
     for (auto& it : subgraphs_map) {
@@ -120,16 +118,16 @@ LLVMRDBuilder::~LLVMRDBuilder() {
 }
 
 static uint64_t getAllocatedSize(const llvm::AllocaInst *AI,
-                                 const llvm::DataLayout *DL)
+                                 const llvm::DataLayout &DL)
 {
     llvm::Type *Ty = AI->getAllocatedType();
     if (!Ty->isSized())
             return 0;
 
     if (AI->isArrayAllocation())
-        return getConstantValue(AI->getArraySize()) * DL->getTypeAllocSize(Ty);
+        return getConstantValue(AI->getArraySize()) * DL.getTypeAllocSize(Ty);
     else
-        return DL->getTypeAllocSize(Ty);
+        return DL.getTypeAllocSize(Ty);
 }
 
 RDNode *LLVMRDBuilder::createAlloc(const llvm::Instruction *Inst)

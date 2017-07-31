@@ -18,7 +18,7 @@ namespace rd {
 class LLVMRDBuilder
 {
     const llvm::Module *M;
-    const llvm::DataLayout *DL;
+    const llvm::DataLayout DL;
     bool assume_pure_functions;
 
     struct Subgraph {
@@ -51,7 +51,7 @@ public:
     LLVMRDBuilder(const llvm::Module *m,
                   dg::LLVMPointerAnalysis *p,
                   bool pure_funs = false)
-        : M(m), DL(new llvm::DataLayout(m)),
+        : M(m), DL(m),
           assume_pure_functions(pure_funs), PTA(p) {}
     ~LLVMRDBuilder();
 
