@@ -10,6 +10,7 @@
 #include "analysis/PointsTo/PointerSubgraph.h"
 #include "analysis/Offset.h"
 
+#include "BBlock.h"
 #include "ADT/Queue.h"
 #include "RDMap.h"
 
@@ -47,6 +48,7 @@ extern RDNode *UNKNOWN_MEMORY;
 class RDNode : public SubgraphNode<RDNode> {
     RDNodeType type;
 
+    BBlock<RDNode> *bblock = nullptr;
     // marks for DFS/BFS
     unsigned int dfsid;
 public:
@@ -130,6 +132,32 @@ public:
         return this == UNKNOWN_MEMORY;
     }
 
+    // TODO: use llvm::Value *
+    using KeyType = void *;
+
+    // this node is not part of any DependenceGraph
+    using DependenceGraphType = void;
+
+    DependenceGraphType *getDG() {
+        return nullptr;
+    }
+
+    BBlock<RDNode> *getBBlock() {
+        return bblock;
+    }
+
+    void setBasicBlock(BBlock<RDNode> *bb) {
+        bblock = bb;
+    }
+
+    void removeCDs() {
+    }
+
+    void removeDDs() {
+    }
+
+    void removeFromDG() {
+    }
 
     friend class ReachingDefinitionsAnalysis;
 };
