@@ -442,7 +442,7 @@ LLVMRDBuilder::buildBlock(const llvm::BasicBlock& block, RDBlock *parent_block)
     RDBlock *rb = new RDBlock();
     rb->setKey(const_cast<llvm::BasicBlock *>(&block));
     //parent_block->addSuccessor(rb);
-    addBlock(rb);
+    addBlock(&block, rb);
 
     // the first node is dummy and serves as a phi from previous
     // blocks so that we can have proper mapping
@@ -637,7 +637,7 @@ LLVMRDBuilder::buildFunction(const llvm::Function& F)
         r->addSuccessor(ret);
 
     rb->append(ret);
-    addBlock(rb);
+    addBlock(&F, rb);
     return rb;
 }
 
@@ -956,7 +956,7 @@ RDBlock *LLVMRDBuilder::buildGlobals()
     }
 
     assert((!first && !cur) || (first && cur));
-    addBlock(glob);
+    addBlock(&(*(M->global_begin())), glob);
     return glob;
 }
 
