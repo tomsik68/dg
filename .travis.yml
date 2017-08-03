@@ -21,15 +21,13 @@ addons:
       - g++-5
       - libz-dev
 
-before_script:
+script:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
   - chmod +x travis-llvm.sh
   - ./travis-llvm.sh 4.0
   - cd ..
   - cmake .
-
-script:
   - make -j2
   - cd test
   - make
