@@ -1,34 +1,38 @@
 language: cpp
-sudo: false
+sudo: true
 
 dist: trusty
 
-env:
-    - LLVM_CONFIG=llvm-config-3.9
-
 compiler:
-    - clang++-3.9
+    - clang++-4.0
     - g++-5
+
 git:
   depth: 1
+
 addons:
   apt:
     sources:
       # newer gcc and clang
       - ubuntu-toolchain-r-test
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main'
+      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
         key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
       - g++-5
-      - llvm-3.9-dev
-      - clang-3.9
       - libz-dev
 
 before_script:
-  - cmake . -DLLVM_CONFIG=$(which ${LLVM_CONFIG})
+  - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
+  - cd travis-llvm
+  - ./travis-llvm.sh 4.0
+  - cd ..
+  - cmake .
 
 script:
   - make -j2
+  - cd test
+  - make
   - make test
+
 notifications:
     email: false
