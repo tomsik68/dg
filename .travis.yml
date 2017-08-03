@@ -71,6 +71,7 @@ install:
   - cd travis-llvm
   - chmod +x travis-llvm.sh
   - ./travis-llvm.sh ${LLVM_VERSION}
+  - cd ..
 
 script:
   - cmake .
