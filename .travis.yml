@@ -17,6 +17,73 @@ addons:
 matrix:
   include:
 
+    # compile with g++4, use LLVM 3.8
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++
+      env:
+        - CC=gcc
+        - CXX=g++
+        - LLVM_VERSION=3.8
+
+    # compile with g++4, use LLVM 3.9
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++
+      env:
+        - CC=gcc
+        - CXX=g++
+        - LLVM_VERSION=3.9
+
+    # compile with g++4, use LLVM 4
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - g++
+      env:
+        - CC=gcc
+        - CXX=g++
+        - LLVM_VERSION=4.0
+
+    # compile with g++5, use LLVM 3.8
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env:
+        - CC=gcc-5
+        - CXX=g++-5
+        - LLVM_VERSION=3.8
+
+    # compile with g++5, use LLVM 3.9
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env:
+        - CC=gcc-5
+        - CXX=g++-5
+        - LLVM_VERSION=3.9
+
     # compile with g++5, use LLVM 4
     - os: linux
       addons:
