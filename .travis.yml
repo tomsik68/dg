@@ -28,7 +28,7 @@ script:
   - cd ..
   - cmake .
   - make -j2
-  - cd test
+  - cd tests
   - make
   - make test
 
