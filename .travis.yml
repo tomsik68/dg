@@ -3,10 +3,6 @@ sudo: true
 
 dist: trusty
 
-compiler:
-    - clang++-4.0
-    - g++-5
-
 git:
   depth: 1
 
@@ -74,7 +70,7 @@ install:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
   - chmod +x travis-llvm.sh
-  - ./travis-llvm.sh $LLVM_VERSION
+  - ./travis-llvm.sh ${LLVM_VERSION}
 
 script:
   - cmake .
