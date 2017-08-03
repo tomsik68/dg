@@ -24,6 +24,7 @@ addons:
 before_script:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
+  - chmod +x travis-llvm.sh
   - ./travis-llvm.sh 4.0
   - cd ..
   - cmake .
