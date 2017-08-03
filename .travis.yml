@@ -15,8 +15,7 @@ addons:
     sources:
       # newer gcc and clang
       - ubuntu-toolchain-r-test
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
-        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
+      - llvm-toolchain-trusty-4.0
     packages:
       - g++-5
       - libz-dev
