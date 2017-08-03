@@ -25,10 +25,10 @@ matrix:
             - llvm-toolchain-trusty-4.0
           packages:
             - g++-5
-          env:
-            - CC=gcc-5
-            - CXX=g++-5
-            - LLVM_VERSION=4.0
+      env:
+        - CC=gcc-5
+        - CXX=g++-5
+        - LLVM_VERSION=4.0
     # compile with g++5, use LLVM 5
     - os: linux
       addons:
@@ -38,10 +38,10 @@ matrix:
             - llvm-toolchain-trusty-5.0
           packages:
             - g++-5
-          env:
-            - CC=gcc-5
-            - CXX=g++-5
-            - LLVM_VERSION=5.0
+      env:
+        - CC=gcc-5
+        - CXX=g++-5
+        - LLVM_VERSION=5.0
     # compile with clang 4, use LLVM 4
     - os: linux
       addons:
@@ -50,10 +50,10 @@ matrix:
             - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0
-          env:
-            - CC=clang-4.0
-            - CXX=clang++-4.0
-            - LLVM_VERSION=4.0
+      env:
+        - CC=clang-4.0
+        - CXX=clang++-4.0
+        - LLVM_VERSION=4.0
     # compile with clang 5, use LLVM 5
     - os: linux
       addons:
@@ -62,10 +62,10 @@ matrix:
             - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
-          env:
-            - CC=clang-5.0
-            - CXX=clang++-5.0
-            - LLVM_VERSION=5.0
+      env:
+        - CC=clang-5.0
+        - CXX=clang++-5.0
+        - LLVM_VERSION=5.0
 install:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
