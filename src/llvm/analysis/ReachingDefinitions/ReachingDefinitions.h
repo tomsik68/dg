@@ -133,7 +133,7 @@ private:
 
 class LLVMReachingDefinitions
 {
-    std::unique_ptr<LLVMRDBuilder> builder;
+    LLVMRDBuilder builder;
     std::unique_ptr<ReachingDefinitionsAnalysis> RDA;
     RDNode *root;
     bool strong_update_unknown;
@@ -145,12 +145,12 @@ public:
                             bool strong_updt_unknown = false,
                             bool pure_funs = false,
                             uint32_t max_set_sz = ~((uint32_t) 0))
-        : builder(std::unique_ptr<LLVMRDBuilder>(new LLVMRDBuilder(m, pta, pure_funs))),
+        : builder(m, pta, pure_funs),
           strong_update_unknown(strong_updt_unknown), max_set_size(max_set_sz) {}
 
     void run()
     {
-        root = builder->build();
+        root = builder.build();
         RDA = std::unique_ptr<ReachingDefinitionsAnalysis>(
             new ReachingDefinitionsAnalysis(root, strong_update_unknown, max_set_size)
             );
@@ -159,22 +159,22 @@ public:
 
     RDNode *getNode(const llvm::Value *val)
     {
-        return builder->getNode(val);
+        return builder.getNode(val);
     }
 
     // let the user get the nodes map, so that we can
     // map the points-to informatio back to LLVM nodes
     const std::unordered_map<const llvm::Value *, RDNode *>&
                                 getNodesMap() const
-    { return builder->getNodesMap(); }
+    { return builder.getNodesMap(); }
 
     const std::unordered_map<const llvm::Value *, RDNode *>&
                                 getMapping() const
-    { return builder->getMapping(); }
+    { return builder.getMapping(); }
 
     RDNode *getMapping(const llvm::Value *val)
     {
-        return builder->getMapping(val);
+        return builder.getMapping(val);
     }
 
     void getNodes(std::set<RDNode *>& cont)
