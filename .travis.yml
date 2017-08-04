@@ -58,7 +58,7 @@ matrix:
         - LLVM_VERSION=4.0
 
 before_install:
-    - eval "$(MATRIX_EVAL)"
+    - eval "${MATRIX_EVAL}"
 install:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
