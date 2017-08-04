@@ -27,8 +27,7 @@ matrix:
           packages:
             - g++
       env:
-        - CC=gcc
-        - CXX=g++
+        - MATRIX_EVAL="CC=gcc && CXX=g++"
         - LLVM_VERSION=4.0
 
     # compile with g++5, use LLVM 4
@@ -42,8 +41,7 @@ matrix:
           packages:
             - g++-5
       env:
-        - CC=gcc-5
-        - CXX=g++-5
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
         - LLVM_VERSION=4.0
 
     # compile with clang 4, use LLVM 4
@@ -56,10 +54,11 @@ matrix:
           packages:
             - clang-4.0
       env:
-        - CC=clang-4.0
-        - CXX=clang++-4.0
+        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
         - LLVM_VERSION=4.0
 
+before_install:
+    - eval "$(MATRIX_EVAL)"
 install:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
