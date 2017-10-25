@@ -17,6 +17,7 @@ addons:
       - libz-dev
 
 env:
+    - LLVM_VERSION=3.8
     - LLVM_VERSION=4.0
 
 compiler:
