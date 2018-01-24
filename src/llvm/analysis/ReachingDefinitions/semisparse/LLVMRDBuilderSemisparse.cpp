@@ -37,7 +37,7 @@
 #include "analysis/PointsTo/PointerSubgraph.h"
 #include "llvm/analysis/PointsTo/PointerSubgraph.h"
 #include "llvm/llvm-utils.h"
-#include "llvm/analysis/ReachingDefinitions/dense/LLVMRDBuilderDense.h"
+#include "llvm/analysis/ReachingDefinitions/dense/LLVMRDBuilderSemisparse.h"
 
 namespace dg {
 namespace analysis {
@@ -69,7 +69,9 @@ static uint64_t getConstantValue(const llvm::Value *op)
     return size;
 }
 
-LLVMRDBuilderDense::~LLVMRDBuilderDense() {
+LLVMRDBuilderSemisparse::~LLVMRDBuilderSemisparse() {
+    // delete data layout
+    delete DL;
 
     // delete artificial nodes from subgraphs
     for (auto& it : subgraphs_map) {
@@ -98,7 +100,7 @@ static uint64_t getAllocatedSize(const llvm::AllocaInst *AI,
         return DL->getTypeAllocSize(Ty);
 }
 
-RDNode *LLVMRDBuilderDense::createAlloc(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderSemisparse::createAlloc(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::ALLOC);
     addNode(Inst, node);
@@ -110,7 +112,7 @@ RDNode *LLVMRDBuilderDense::createAlloc(const llvm::Instruction *Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilderDense::createDynAlloc(const llvm::Instruction *Inst, MemAllocationFuncs type)
+RDNode *LLVMRDBuilderSemisparse::createDynAlloc(const llvm::Instruction *Inst, MemAllocationFuncs type)
 {
     using namespace llvm;
 
@@ -150,7 +152,7 @@ RDNode *LLVMRDBuilderDense::createDynAlloc(const llvm::Instruction *Inst, MemAll
     return node;
 }
 
-RDNode *LLVMRDBuilderDense::createRealloc(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderSemisparse::createRealloc(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
@@ -203,7 +205,7 @@ static void getLocalVariables(const llvm::Function *F,
     }
 }
 
-RDNode *LLVMRDBuilderDense::createReturn(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderSemisparse::createReturn(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::RETURN);
     addNode(Inst, node);
@@ -232,7 +234,7 @@ RDNode *LLVMRDBuilderDense::createReturn(const llvm::Instruction *Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilderDense::getOperand(const llvm::Value *val)
+RDNode *LLVMRDBuilderSemisparse::getOperand(const llvm::Value *val)
 {
     RDNode *op = getNode(val);
     if (!op)
@@ -241,7 +243,7 @@ RDNode *LLVMRDBuilderDense::getOperand(const llvm::Value *val)
     return op;
 }
 
-RDNode *LLVMRDBuilderDense::createNode(const llvm::Instruction &Inst)
+RDNode *LLVMRDBuilderSemisparse::createNode(const llvm::Instruction &Inst)
 {
     using namespace llvm;
 
@@ -262,7 +264,7 @@ RDNode *LLVMRDBuilderDense::createNode(const llvm::Instruction &Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilderDense::createStore(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderSemisparse::createStore(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::STORE);
     addNode(Inst, node);
@@ -399,7 +401,7 @@ static bool isRelevantCall(const llvm::Instruction *Inst)
 
 // return first and last nodes of the block
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilderDense::buildBlock(const llvm::BasicBlock& block)
+LLVMRDBuilderSemisparse::buildBlock(const llvm::BasicBlock& block)
 {
     using namespace llvm;
 
@@ -492,7 +494,7 @@ static size_t blockAddSuccessors(std::map<const llvm::BasicBlock *,
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilderDense::createCallToFunction(const llvm::Function *F)
+LLVMRDBuilderSemisparse::createCallToFunction(const llvm::Function *F)
 {
     RDNode *callNode, *returnNode;
 
@@ -534,7 +536,7 @@ LLVMRDBuilderDense::createCallToFunction(const llvm::Function *F)
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilderDense::buildFunction(const llvm::Function& F)
+LLVMRDBuilderSemisparse::buildFunction(const llvm::Function& F)
 {
     // here we'll keep first and last nodes of every built block and
     // connected together according to successors
@@ -590,7 +592,7 @@ LLVMRDBuilderDense::buildFunction(const llvm::Function& F)
     return {root, ret};
 }
 
-RDNode *LLVMRDBuilderDense::createUndefinedCall(const llvm::CallInst *CInst)
+RDNode *LLVMRDBuilderSemisparse::createUndefinedCall(const llvm::CallInst *CInst)
 {
     using namespace llvm;
 
@@ -652,7 +654,7 @@ RDNode *LLVMRDBuilderDense::createUndefinedCall(const llvm::CallInst *CInst)
     return node;
 }
 
-RDNode *LLVMRDBuilderDense::createIntrinsicCall(const llvm::CallInst *CInst)
+RDNode *LLVMRDBuilderSemisparse::createIntrinsicCall(const llvm::CallInst *CInst)
 {
     using namespace llvm;
 
@@ -726,7 +728,7 @@ RDNode *LLVMRDBuilderDense::createIntrinsicCall(const llvm::CallInst *CInst)
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilderDense::createCall(const llvm::Instruction *Inst)
+LLVMRDBuilderSemisparse::createCall(const llvm::Instruction *Inst)
 {
     using namespace llvm;
     const CallInst *CInst = cast<CallInst>(Inst);
@@ -858,7 +860,7 @@ LLVMRDBuilderDense::createCall(const llvm::Instruction *Inst)
     }
 }
 
-RDNode *LLVMRDBuilderDense::build()
+RDNode *LLVMRDBuilderSemisparse::build()
 {
     // get entry function
     llvm::Function *F = M->getFunction("main");
@@ -891,7 +893,7 @@ RDNode *LLVMRDBuilderDense::build()
     return root;
 }
 
-std::pair<RDNode *, RDNode *> LLVMRDBuilderDense::buildGlobals()
+std::pair<RDNode *, RDNode *> LLVMRDBuilderSemisparse::buildGlobals()
 {
     RDNode *cur = nullptr, *prev, *first = nullptr;
     for (auto I = M->global_begin(), E = M->global_end(); I != E; ++I) {
