@@ -37,7 +37,7 @@
 #include "analysis/PointsTo/PointerSubgraph.h"
 #include "llvm/analysis/PointsTo/PointerSubgraph.h"
 #include "llvm/llvm-utils.h"
-#include "ReachingDefinitions.h"
+#include "llvm/analysis/ReachingDefinitions/dense/LLVMRDBuilderDense.h"
 
 namespace dg {
 namespace analysis {
@@ -69,7 +69,7 @@ static uint64_t getConstantValue(const llvm::Value *op)
     return size;
 }
 
-LLVMRDBuilder::~LLVMRDBuilder() {
+LLVMRDBuilderDense::~LLVMRDBuilderDense() {
     // delete data layout
     delete DL;
 
@@ -81,11 +81,6 @@ LLVMRDBuilder::~LLVMRDBuilder() {
         delete it.second.ret;
     }
 
-    // delete nodes
-    for (auto& it : nodes_map) {
-        assert(it.first && "Have a nullptr node mapping");
-        delete it.second;
-    }
 
     // delete dummy nodes
     for (RDNode *nd : dummy_nodes)
@@ -105,7 +100,7 @@ static uint64_t getAllocatedSize(const llvm::AllocaInst *AI,
         return DL->getTypeAllocSize(Ty);
 }
 
-RDNode *LLVMRDBuilder::createAlloc(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderDense::createAlloc(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::ALLOC);
     addNode(Inst, node);
@@ -117,7 +112,7 @@ RDNode *LLVMRDBuilder::createAlloc(const llvm::Instruction *Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilder::createDynAlloc(const llvm::Instruction *Inst, MemAllocationFuncs type)
+RDNode *LLVMRDBuilderDense::createDynAlloc(const llvm::Instruction *Inst, MemAllocationFuncs type)
 {
     using namespace llvm;
 
@@ -157,7 +152,7 @@ RDNode *LLVMRDBuilder::createDynAlloc(const llvm::Instruction *Inst, MemAllocati
     return node;
 }
 
-RDNode *LLVMRDBuilder::createRealloc(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderDense::createRealloc(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::DYN_ALLOC);
     addNode(Inst, node);
@@ -210,7 +205,7 @@ static void getLocalVariables(const llvm::Function *F,
     }
 }
 
-RDNode *LLVMRDBuilder::createReturn(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderDense::createReturn(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::RETURN);
     addNode(Inst, node);
@@ -239,7 +234,7 @@ RDNode *LLVMRDBuilder::createReturn(const llvm::Instruction *Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilder::getOperand(const llvm::Value *val)
+RDNode *LLVMRDBuilderDense::getOperand(const llvm::Value *val)
 {
     RDNode *op = getNode(val);
     if (!op)
@@ -248,7 +243,7 @@ RDNode *LLVMRDBuilder::getOperand(const llvm::Value *val)
     return op;
 }
 
-RDNode *LLVMRDBuilder::createNode(const llvm::Instruction &Inst)
+RDNode *LLVMRDBuilderDense::createNode(const llvm::Instruction &Inst)
 {
     using namespace llvm;
 
@@ -269,7 +264,7 @@ RDNode *LLVMRDBuilder::createNode(const llvm::Instruction &Inst)
     return node;
 }
 
-RDNode *LLVMRDBuilder::createStore(const llvm::Instruction *Inst)
+RDNode *LLVMRDBuilderDense::createStore(const llvm::Instruction *Inst)
 {
     RDNode *node = new RDNode(RDNodeType::STORE);
     addNode(Inst, node);
@@ -406,7 +401,7 @@ static bool isRelevantCall(const llvm::Instruction *Inst)
 
 // return first and last nodes of the block
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilder::buildBlock(const llvm::BasicBlock& block)
+LLVMRDBuilderDense::buildBlock(const llvm::BasicBlock& block)
 {
     using namespace llvm;
 
@@ -499,7 +494,7 @@ static size_t blockAddSuccessors(std::map<const llvm::BasicBlock *,
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilder::createCallToFunction(const llvm::Function *F)
+LLVMRDBuilderDense::createCallToFunction(const llvm::Function *F)
 {
     RDNode *callNode, *returnNode;
 
@@ -541,7 +536,7 @@ LLVMRDBuilder::createCallToFunction(const llvm::Function *F)
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilder::buildFunction(const llvm::Function& F)
+LLVMRDBuilderDense::buildFunction(const llvm::Function& F)
 {
     // here we'll keep first and last nodes of every built block and
     // connected together according to successors
@@ -597,7 +592,7 @@ LLVMRDBuilder::buildFunction(const llvm::Function& F)
     return {root, ret};
 }
 
-RDNode *LLVMRDBuilder::createUndefinedCall(const llvm::CallInst *CInst)
+RDNode *LLVMRDBuilderDense::createUndefinedCall(const llvm::CallInst *CInst)
 {
     using namespace llvm;
 
@@ -659,7 +654,7 @@ RDNode *LLVMRDBuilder::createUndefinedCall(const llvm::CallInst *CInst)
     return node;
 }
 
-RDNode *LLVMRDBuilder::createIntrinsicCall(const llvm::CallInst *CInst)
+RDNode *LLVMRDBuilderDense::createIntrinsicCall(const llvm::CallInst *CInst)
 {
     using namespace llvm;
 
@@ -733,7 +728,7 @@ RDNode *LLVMRDBuilder::createIntrinsicCall(const llvm::CallInst *CInst)
 }
 
 std::pair<RDNode *, RDNode *>
-LLVMRDBuilder::createCall(const llvm::Instruction *Inst)
+LLVMRDBuilderDense::createCall(const llvm::Instruction *Inst)
 {
     using namespace llvm;
     const CallInst *CInst = cast<CallInst>(Inst);
@@ -865,7 +860,7 @@ LLVMRDBuilder::createCall(const llvm::Instruction *Inst)
     }
 }
 
-RDNode *LLVMRDBuilder::build()
+RDNode *LLVMRDBuilderDense::build()
 {
     // get entry function
     llvm::Function *F = M->getFunction("main");
@@ -898,7 +893,7 @@ RDNode *LLVMRDBuilder::build()
     return root;
 }
 
-std::pair<RDNode *, RDNode *> LLVMRDBuilder::buildGlobals()
+std::pair<RDNode *, RDNode *> LLVMRDBuilderDense::buildGlobals()
 {
     RDNode *cur = nullptr, *prev, *first = nullptr;
     for (auto I = M->global_begin(), E = M->global_end(); I != E; ++I) {
