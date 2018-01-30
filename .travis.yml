@@ -18,18 +18,12 @@ addons:
       - libz-dev
 
 env:
-    - LLVM_VERSION=3.8
-      DG_TESTS_PTA=fs
-    - LLVM_VERSION=3.8
-      DG_TESTS_PTA=fi
-    - LLVM_VERSION=4.0
-      DG_TESTS_PTA=fs
-    - LLVM_VERSION=4.0
-      DG_TESTS_PTA=fi
-    - LLVM_VERSION=5.0
-      DG_TESTS_PTA=fs
-    - LLVM_VERSION=5.0
-      DG_TESTS_PTA=fi
+    - LLVM=3.8 PTA=fs
+    - LLVM=3.8 PTA=fi
+    - LLVM=4.0 PTA=fs
+    - LLVM=4.0 PTA=fi
+    - LLVM=5.0 PTA=fs
+    - LLVM=5.0 PTA=fi
 
 compiler:
     - 'clang++'
@@ -40,7 +34,7 @@ install:
   - git clone --depth 1 https://github.com/tomsik68/travis-llvm.git
   - cd travis-llvm
   - chmod +x travis-llvm.sh
-  - ./travis-llvm.sh ${LLVM_VERSION}
+  - ./travis-llvm.sh ${LLVM}
   - cd ..
 
 script:
@@ -48,7 +42,7 @@ script:
   - make -j4
   - cd tests
   - make
-  - make test
+  - DG_TESTS_PTA=$PTA make test
 
 notifications:
     email: false
