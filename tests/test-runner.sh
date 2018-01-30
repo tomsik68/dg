@@ -93,6 +93,7 @@ run_test()
 	BCFILE="$NAME.bc"
 	SLICEDFILE="$NAME.sliced"
 	LINKEDFILE="$NAME.sliced.linked"
+	SLICER_PARAMS=""
 
 	# clean old files before running the test
 	rm -f $BCFILE $SLICEDFILE $LINKEDFILE
@@ -102,10 +103,10 @@ run_test()
 
 	# slice the code
 	if [ ! -z "$DG_TESTS_PTA" ]; then
-		export DG_TESTS_PTA="-pta $DG_TESTS_PTA"
+		SLICER_PARAMS="$SLICER_PARAMS -pta $DG_TESTS_PTA"
 	fi
 
-	llvm-slicer $DG_TESTS_PTA -c test_assert "$BCFILE"
+	llvm-slicer $SLICER_PARAMS -c test_assert "$BCFILE"
 
 	# link assert to the code
 	link_with_assert "$SLICEDFILE" "$LINKEDFILE"
