@@ -19,9 +19,12 @@ addons:
       - libz-dev
 
 env:
-    - LLVM_VERSION=3.8
-    - LLVM_VERSION=4.0
-    - LLVM_VERSION=5.0
+    - LLVM_VERSION=3.8 DG_TESTS_PTA=fs
+    - LLVM_VERSION=3.8 DG_TESTS_PTA=fi
+    - LLVM_VERSION=4.0 DG_TESTS_PTA=fs
+    - LLVM_VERSION=4.0 DG_TESTS_PTA=fi
+    - LLVM_VERSION=5.0 DG_TESTS_PTA=fs
+    - LLVM_VERSION=5.0 DG_TESTS_PTA=fi
 
 compiler:
     - 'clang++'
