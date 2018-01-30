@@ -14,17 +14,22 @@ addons:
       - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
         key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
       - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
       - libz-dev
 
 env:
-    - LLVM_VERSION=3.8 DG_TESTS_PTA=fs
-    - LLVM_VERSION=3.8 DG_TESTS_PTA=fi
-    - LLVM_VERSION=4.0 DG_TESTS_PTA=fs
-    - LLVM_VERSION=4.0 DG_TESTS_PTA=fi
-    - LLVM_VERSION=5.0 DG_TESTS_PTA=fs
-    - LLVM_VERSION=5.0 DG_TESTS_PTA=fi
+    - LLVM_VERSION=3.8
+      DG_TESTS_PTA=fs
+    - LLVM_VERSION=3.8
+      DG_TESTS_PTA=fi
+    - LLVM_VERSION=4.0
+      DG_TESTS_PTA=fs
+    - LLVM_VERSION=4.0
+      DG_TESTS_PTA=fi
+    - LLVM_VERSION=5.0
+      DG_TESTS_PTA=fs
+    - LLVM_VERSION=5.0
+      DG_TESTS_PTA=fi
 
 compiler:
     - 'clang++'
@@ -40,7 +45,7 @@ install:
 
 script:
   - cmake -DCMAKE_BUILD_TYPE=DEBUG .
-  - make -j2
+  - make -j4
   - cd tests
   - make
   - make test
