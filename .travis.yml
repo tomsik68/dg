@@ -18,12 +18,12 @@ addons:
       - libz-dev
 
 env:
-    - LLVM=3.8 DG_TESTS_PTA="-pta fs"
-    - LLVM=3.8 DG_TESTS_PTA="-pta fi"
-    - LLVM=4.0 DG_TESTS_PTA="-pta fs"
-    - LLVM=4.0 DG_TESTS_PTA="-pta fi"
-    - LLVM=5.0 DG_TESTS_PTA="-pta fs"
-    - LLVM=5.0 DG_TESTS_PTA="-pta fi"
+    - LLVM=3.8 PTA=fs
+    - LLVM=3.8 PTA=fi
+    - LLVM=4.0 PTA=fs
+    - LLVM=4.0 PTA=fi
+    - LLVM=5.0 PTA=fs
+    - LLVM=5.0 PTA=fi
 
 compiler:
     - 'clang++'
@@ -42,6 +42,7 @@ script:
   - make -j4
   - cd tests
   - make
+  - export DG_TESTS_PTA="$PTA"
   - make test
 
 notifications:
