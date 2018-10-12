@@ -49,13 +49,21 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
      * Remember strong definition @assignment of a @var in @block.
      * Side-effect: kill current overlapping strong definitions and current overlapping weak definitions.
      */
-    void writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block);
+    inline void writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block) {
+        detail::Interval interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
+        current_weak_def[var.target][block].killOverlapping(interval);
+        current_def[var.target][block].killOverlapping(interval);
+        // remember the last definition
+        current_def[var.target][block].add(std::move(interval), assignment);
+    }
 
     /**
      * Remember weak definition @assignment of @var in @block.
      * Does not affect other definitions.
      */
-    void writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block);
+    inline void writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block) {
+        current_weak_def[var.target][block].add(concretize(detail::Interval{var.offset, var.len}, var.target->getSize()), assignment);
+    }
 
     /**
      * Recursively looks up definition of @var in @block starting in @start. @start is supplied to prevent infinite recursion with weak updates.
@@ -69,7 +77,7 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
      * If the interval has unknown offset or length, it is changed to contain everything.
      * Optional parameter @size makes it possible to concretize to variable size, in case the size is known.
      */
-    detail::Interval concretize(detail::Interval interval, uint64_t size = Offset::UNKNOWN) const {
+    inline detail::Interval concretize(detail::Interval interval, uint64_t size = Offset::UNKNOWN) const {
         if (size == 0) {
             size = Offset::UNKNOWN;
         }
@@ -79,7 +87,7 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
         return interval;
     }
 
-    std::vector<NodeT *> readVariable(const DefSite& var, BlockT *read, BlockT *start) {
+    inline std::vector<NodeT *> readVariable(const DefSite& var, BlockT *read, BlockT *start) {
         Intervals empty_vector;
         return readVariable(var, read, start, empty_vector);
     }
@@ -104,12 +112,12 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
      * @from is a definition
      * @to is a use
      */
-    void insertSrgEdge(NodeT *from, NodeT *to, const DefSite& var) {
+    inline void insertSrgEdge(NodeT *from, NodeT *to, const DefSite& var) {
         srg[to].push_back(std::make_pair(var, from));
         reverse_srg[from].push_back(std::make_pair(var, to));
     }
 
-    void removeSrgEdge(NodeT *from, NodeT *to, const DefSite& var) {
+    inline void removeSrgEdge(NodeT *from, NodeT *to, const DefSite& var) {
         auto& to_vec = srg[to];
         auto it = std::find(to_vec.begin(), to_vec.end(), std::make_pair(var, from));
         if (it != to_vec.end()) {

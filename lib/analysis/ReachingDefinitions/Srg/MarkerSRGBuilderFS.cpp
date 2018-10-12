@@ -1,22 +1,6 @@
 #include "analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.h"
 
 using namespace dg::analysis::rd::srg;
-/**
- * Saves the current definition of certain variable in given block
- * Used from value numbering procedures.
- */
-void MarkerSRGBuilderFS::writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block) {
-    detail::Interval interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
-    current_weak_def[var.target][block].killOverlapping(interval);
-    current_def[var.target][block].killOverlapping(interval);
-    // remember the last definition
-    current_def[var.target][block].add(std::move(interval), assignment);
-}
-
-void MarkerSRGBuilderFS::writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block) {
-    current_weak_def[var.target][block].add(concretize(detail::Interval{var.offset, var.len}, var.target->getSize()), assignment);
-}
-
 std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const DefSite& var, BlockT *read, BlockT *start, const Intervals& covered) {
     assert( read );
     // use specialized method for unknown memory
