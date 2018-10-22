@@ -62,6 +62,14 @@ public:
         return len;
     }
 
+    void setStart(T s) {
+        start = s;
+    }
+
+    void setLength(T length) {
+        len = length;
+    }
+
 };
 
 /**
@@ -172,7 +180,7 @@ public:
             return;
 
         std::vector<std::pair<Interval, V>> to_add;
-        for (auto&& it = buckets.begin(); it != buckets.end(); ) {
+        for (auto it = buckets.begin(); it != buckets.end(); ) {
             Interval& interval = it->first;
             V& v = it->second;
 
@@ -194,6 +202,7 @@ public:
                     if (new_int.getLength().offset > 0) {
                         to_add.push_back(std::pair<Interval, V>(std::move(new_int), std::move(v)));
                     }
+                    it = buckets.erase(it);
                 } else if (!ki.isSubsetOf(interval) && !interval.isSubsetOf(ki)) {
                     // calculate preserved interval
                     Offset start, end;
@@ -206,12 +215,13 @@ public:
                         start = interval.getStart();
                         end = ki.getStart();
                     }
-                    auto new_int = Interval{start, end - start};
-                    if (new_int.getLength().offset > 0) {
-                        to_add.push_back(std::pair<Interval, V>(std::move(new_int), std::move(v)));
-                    }
-                } // else kill the whole interval, which is done by erasing it from buckets vector
-                it = buckets.erase(it);
+                    interval.setStart(start);
+                    interval.setLength(end - start);
+                    ++it;
+                } else {
+                    // else kill the whole interval, which is done by erasing it from buckets vector
+                    it = buckets.erase(it);
+                }
             } else {
                 ++it;
             }
