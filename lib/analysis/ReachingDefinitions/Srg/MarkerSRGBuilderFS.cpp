@@ -5,17 +5,17 @@ std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const 
     assert( read );
     // use specialized method for unknown memory
     if (var.target == UNKNOWN_MEMORY) {
-        std::unordered_map<NodeT *, detail::DisjointIntervalSet> found;
-        return std::vector<NodeT *> { readUnknown(read, found) };
+        return std::vector<NodeT *> { readUnknown(read) };
     }
 
     auto& block_defs = current_def[var.target];
     auto it = block_defs.find(read);
     std::vector<NodeT *> result;
     const auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
+    auto& current_weak_map = current_weak_def[var.target][read];
 
     // find weak defs
-    auto block_weak_defs = current_weak_def[var.target][read].collectAll(interval);
+    auto block_weak_defs = current_weak_map.collectAll(interval);
     auto unknown_defs = current_weak_def[UNKNOWN_MEMORY][read].collectAll(interval);
 
     // find the last definition
@@ -24,11 +24,11 @@ std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const 
         bool is_covered = false;
         std::tie(result, cov, is_covered) = it->second.collect(interval, covered);
         if (!is_covered && (!interval.isUnknown() || read != start)) {
-            NodeT *phi = readVariableRecursive(var, read, start, cov);
+            NodeT *phi = readVariableRecursive(var, read, start, cov, it->second, current_weak_map);
             result.push_back(phi);
         }
     } else {
-        result.push_back(readVariableRecursive(var, read, start, covered));
+        result.push_back(readVariableRecursive(var, read, start, covered, block_defs[read], current_weak_map));
     }
 
     // add weak defs & unknown weak defs
@@ -139,7 +139,7 @@ void MarkerSRGBuilderFS::replacePhi(NodeT *phi, NodeT *replacement) {
     }
 }
 
-MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSite& var, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered) {
+MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSite& var, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered, detail::IntervalMap<NodeT*>& current_map, detail::IntervalMap<NodeT*>& current_weak_map) {
     std::vector<NodeT *> result;
 
     auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
@@ -147,13 +147,15 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSi
 
     phi->setBasicBlock(block);
     // writeVariableStrong kills current weak definitions, which are needed in the phi node, so we need to lookup them first.
-    auto weak_defs = current_weak_def[var.target][block].collectAll(interval);
+    auto weak_defs = current_weak_map.collectAll(interval);
+    // XXX add definitions of unknown memory too
     for (auto& assignment : weak_defs)
         insertSrgEdge(assignment, phi.get(), var);
 
-    writeVariableStrong(var, phi.get(), block);
+    writeVariableStrong(var, phi.get(), block, current_map, current_weak_map);
     NodeT *val = addPhiOperands(var, phi.get(), block, start, covered);
-    writeVariableStrong(var, val, block);
+    writeVariableStrong(var, val, block, current_map, current_weak_map);
+    //NodeT *val = phi.get();
 
     phi_nodes.push_back(std::move(phi));
 
@@ -165,7 +167,7 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSi
   Only search until all variables are 'covered' or an allocation is found.
   Branching will be solved via phi nodes
 */
-MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::unordered_map<NodeT *, detail::DisjointIntervalSet>& found) {
+MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read) {
      std::vector<NodeT *> result;
 
     // try to find definitions of UNKNOWN_MEMORY in the current block.
@@ -186,7 +188,7 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::un
             std::unique_ptr<NodeT> phi{new NodeT(RDNodeType::PHI)};
             NodeT *ptr = phi.get();
             phi->setBasicBlock(read);
-            writeVariableStrong(UNKNOWN_MEMORY, phi.get(), read);
+            writeVariableStrong(UNKNOWN_MEMORY, phi.get(), read, it->second, current_weak_def[UNKNOWN_MEMORY][read]);
             for (auto& node : result) {
                 insertSrgEdge(node, phi.get(), UNKNOWN_MEMORY);
             }
@@ -235,13 +237,13 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::un
     // make a phi node for unknown memory
     auto phi = std::unique_ptr<NodeT>(new NodeT(RDNodeType::PHI));
     phi->setBasicBlock(read);
-    writeVariableStrong(UNKNOWN_MEMORY, phi.get(), read);
+    writeVariableStrong(UNKNOWN_MEMORY, phi.get(), read, it->second, current_weak_def[UNKNOWN_MEMORY][read]);
     // continue the search for definitions in previous blocks
     for (auto& pred : read->predecessors()) {
         if (pred == read)
             continue;
 
-        auto assignment = readUnknown(pred, found);
+        auto assignment = readUnknown(pred);
         result.push_back(assignment);
     }
     for (auto& node : result) {
