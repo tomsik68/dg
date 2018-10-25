@@ -52,7 +52,6 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
     inline void writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block, detail::IntervalMap<NodeT *>& current_map, detail::IntervalMap<NodeT*>& current_weak_map) {
         detail::Interval interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
         current_weak_map.killOverlapping(interval);
-        current_map.killOverlapping(interval);
         /* // remember the last definition */
         current_map.add(std::move(interval), assignment);
     }
