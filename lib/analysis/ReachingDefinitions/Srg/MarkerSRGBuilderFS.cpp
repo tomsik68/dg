@@ -7,14 +7,15 @@ using namespace dg::analysis::rd::srg;
  */
 void MarkerSRGBuilderFS::writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block) {
     detail::Interval interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
-    current_weak_def[var.target][block].killOverlapping(interval);
-    current_def[var.target][block].killOverlapping(interval);
+    /* current_weak_def[var.target][block].killOverlapping(interval); */
+    /* current_def[var.target][block].killOverlapping(interval); */
     // remember the last definition
-    current_def[var.target][block].add(std::move(interval), assignment);
+    current_def[var.target][block].update(interval.getStart(), interval.getStart() + interval.getLength(), assignment);
 }
 
 void MarkerSRGBuilderFS::writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block) {
-    current_weak_def[var.target][block].add(concretize(detail::Interval{var.offset, var.len}, var.target->getSize()), assignment);
+    const auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
+    current_weak_def[var.target][block].add(interval.getStart(), interval.getStart() + interval.getLength(), assignment);
 }
 
 std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const DefSite& var, BlockT *read, BlockT *start, const Intervals& covered) {
@@ -31,14 +32,15 @@ std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const 
     const auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
 
     // find weak defs
-    auto block_weak_defs = current_weak_def[var.target][read].collectAll(interval);
-    auto unknown_defs = current_weak_def[UNKNOWN_MEMORY][read].collectAll(interval);
+    auto block_weak_defs = current_weak_def[var.target][read].collect(interval.getStart(), interval.getStart() + interval.getLength());
+    auto unknown_defs = current_weak_def[UNKNOWN_MEMORY][read].collect(interval.getStart(), interval.getStart() + interval.getLength());
 
     // find the last definition
     if (it != block_defs.end()) {
         Intervals cov;
-        bool is_covered = false;
-        std::tie(result, cov, is_covered) = it->second.collect(interval, covered);
+        bool is_covered = it->second.overlapsFull(interval.getStart(), interval.getStart() + interval.getLength());
+        auto vals = it->second.collect(interval.getStart(), interval.getStart() + interval.getLength());
+        std::move(vals.begin(), vals.end(), std::back_inserter(result));
         if (!is_covered && (!interval.isUnknown() || read != start)) {
             NodeT *phi = readVariableRecursive(var, read, start, cov);
             result.push_back(phi);
@@ -64,11 +66,12 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::addPhiOperands(const DefSite& var
     for (BlockT *pred : block->predecessors()) {
         std::vector<NodeT *> assignments;
         Intervals cov;
-        bool is_covered = false;
+        bool is_covered = last_def[var.target][pred].overlapsFull(interval.getStart(), interval.getStart() + interval.getLength());
 
-        std::tie(assignments, cov, is_covered) = last_def[var.target][pred].collect(interval, covered);
+        auto vals = last_def[var.target][pred].collect(interval.getStart(), interval.getStart() + interval.getLength());
+        std::move(vals.begin(), vals.end(), std::back_inserter(assignments));
         // add weak updates
-        auto weak_defs = last_weak_def[var.target][pred].collectAll(interval);
+        auto weak_defs = last_weak_def[var.target][pred].collect(interval.getStart(), interval.getStart() + interval.getLength());
         std::move(weak_defs.begin(), weak_defs.end(), std::back_inserter(assignments));
 
         if (!is_covered || (interval.isUnknown() && block != start)) {
@@ -163,7 +166,7 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSi
 
     phi->setBasicBlock(block);
     // writeVariableStrong kills current weak definitions, which are needed in the phi node, so we need to lookup them first.
-    auto weak_defs = current_weak_def[var.target][block].collectAll(interval);
+    auto weak_defs = current_weak_def[var.target][block].collect(interval.getStart(), interval.getStart() + interval.getLength());
     for (auto& assignment : weak_defs)
         insertSrgEdge(assignment, phi.get(), var);
 
@@ -192,8 +195,9 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::un
     // does any definition exist in this block?
     if (it != block_defs.end()) {
         Intervals cov;
-        bool is_covered = false;
-        result = it->second.collectAll(interval);
+        bool is_covered = it->second.overlapsFull(interval.getStart(), interval.getStart() + interval.getLength());
+        auto vals = it->second.collect(interval.getStart(), interval.getStart() + interval.getLength());
+        std::move(vals.begin(), vals.end(), std::back_inserter(result));
 
         // no phi necessary for single definition
         if (result.size() == 1) {
@@ -220,9 +224,10 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::un
         // second thought: the coverage check cost might be too high
         for (auto& block_defs : var_blocks.second) {
             if (block_defs.first == read) {
-                for (auto& interval_val : block_defs.second) {
+                for (const auto& interval_val : block_defs.second) {
                     // now we are iterating over the interval map
-                    result.push_back(interval_val.second);
+                    /* result.push_back(interval_val.second); */
+                    std::copy(interval_val.second.begin(), interval_val.second.end(), std::back_inserter(result));
                     // TODO: only if @interval_val.second is a strong update, add coverage information
                 }
             }
@@ -236,7 +241,8 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::un
             if (block_defs.first == read) {
                 for (auto& interval_val : block_defs.second) {
                     // now we are iterating the interval map
-                    result.push_back(interval_val.second);
+                    /* result.push_back(interval_val.second); */
+                    std::copy(interval_val.second.begin(), interval_val.second.end(), std::back_inserter(result));
                 }
             }
         }

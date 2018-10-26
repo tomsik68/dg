@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <map>
 
+#include "dg/analysis/ReachingDefinitions/DisjunctiveIntervalMap.h"
 #include "dg/analysis/BFS.h"
 
 #include "analysis/ReachingDefinitions/Srg/SparseRDGraphBuilder.h"
@@ -27,7 +28,7 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
     using Intervals = std::vector<detail::Interval>;
 
     // for each variable { for each block { for each offset in variable { remember definition } } }
-    using DefMapT = std::unordered_map<NodeT *, std::unordered_map<BlockT *, detail::IntervalMap<NodeT *>>>;
+    using DefMapT = std::unordered_map<NodeT *, std::unordered_map<BlockT *, ::dg::analysis::rd::DisjunctiveIntervalMap<NodeT *>>>;
 
     /* the resulting graph - stored in class for convenience, moved away on return */
     SparseRDGraph srg;
@@ -126,13 +127,13 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
     void performLvn(BlockT *block) {
         for (NodeT *node : block->getNodes()) {
             for (const DefSite& def : node->defs) {
+                detail::Interval interval = concretize(detail::Interval{def.offset, def.len}, def.target->getSize());
                 if (node->isOverwritten(def) && !def.offset.isUnknown()) {
-                    detail::Interval interval = concretize(detail::Interval{def.offset, def.len}, def.target->getSize());
-                    last_def[def.target][block].killOverlapping(interval);
-                    last_weak_def[def.target][block].killOverlapping(interval);
-                    last_def[def.target][block].add(std::move(interval), node);
+                    /* last_def[def.target][block].killOverlapping(interval); */
+                    /* last_weak_def[def.target][block].killOverlapping(interval); */
+                    last_def[def.target][block].add(interval.getStart(), interval.getStart() + interval.getLength(), node);
                 } else {
-                    last_weak_def[def.target][block].add(concretize(detail::Interval{def.offset, def.len}, def.target->getSize()), node);
+                    last_weak_def[def.target][block].add(interval.getStart(), interval.getStart() + interval.getLength(), node);
                 }
             }
         }
