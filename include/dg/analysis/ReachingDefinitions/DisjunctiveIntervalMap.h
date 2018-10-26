@@ -126,6 +126,25 @@ public:
         return overlapsFull(IntervalT(start, end));
     }
 
+    ValuesT collect(const IntervalValueT start, const IntervalValueT end) const {
+        return collect(IntervalT(start, end));
+    }
+
+    ValuesT collect(const IntervalT& search_interval) const {
+        ValuesT result;
+
+        for (auto it = _mapping.rbegin(); it != _mapping.rend(); ++it) {
+            const auto& found_interval = it->first;
+            const auto& found_values = it->second;
+
+            if (intervalsOverlap(search_interval, found_interval) /* XXX and not coverage */) {
+                result.insert(found_values.begin(), found_values.end());
+            }
+        }
+
+        return result;
+    }
+
     bool empty() const { return _mapping.empty(); }
     size_t size() const { return _mapping.size(); }
 
@@ -152,6 +171,11 @@ public:
 #endif
 
 private:
+
+    inline bool intervalsOverlap(const IntervalT& a, const IntervalT& b) const {
+        return (a.start >= b.start && a.start <= b.end) ||
+            (b.start >= a.start && b.start <= a.end);
+    }
 
     // Split interval [a,b] to two intervals [a, where] and [where + 1, b].
     // Each of the new intervals has a copy of the original set associated
