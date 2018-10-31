@@ -131,7 +131,7 @@ class MarkerSRGBuilderFS : public SparseRDGraphBuilder
                 if (node->isOverwritten(def) && !def.offset.isUnknown()) {
                     /* last_def[def.target][block].killOverlapping(interval); */
                     /* last_weak_def[def.target][block].killOverlapping(interval); */
-                    last_def[def.target][block].add(interval.getStart(), interval.getStart() + interval.getLength(), node);
+                    last_def[def.target][block].update(interval.getStart(), interval.getStart() + interval.getLength(), node);
                 } else {
                     last_weak_def[def.target][block].add(interval.getStart(), interval.getStart() + interval.getLength(), node);
                 }
