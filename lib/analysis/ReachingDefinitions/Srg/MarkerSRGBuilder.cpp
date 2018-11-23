@@ -1,11 +1,11 @@
-#include "analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.h"
+#include "analysis/ReachingDefinitions/Srg/MarkerSRGBuilder.h"
 
 using namespace dg::analysis::rd::srg;
 /**
  * Saves the current definition of certain variable in given block
  * Used from value numbering procedures.
  */
-void MarkerSRGBuilderFS::writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block) {
+void MarkerSRGBuilder::writeVariableStrong(const DefSite& var, NodeT *assignment, BlockT *block) {
     detail::Interval interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
     current_weak_def[var.target][block].killOverlapping(interval);
     current_def[var.target][block].killOverlapping(interval);
@@ -13,11 +13,11 @@ void MarkerSRGBuilderFS::writeVariableStrong(const DefSite& var, NodeT *assignme
     current_def[var.target][block].add(std::move(interval), assignment);
 }
 
-void MarkerSRGBuilderFS::writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block) {
+void MarkerSRGBuilder::writeVariableWeak(const DefSite& var, NodeT *assignment, BlockT *block) {
     current_weak_def[var.target][block].add(concretize(detail::Interval{var.offset, var.len}, var.target->getSize()), assignment);
 }
 
-std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const DefSite& var, BlockT *read, BlockT *start, const Intervals& covered) {
+std::vector<MarkerSRGBuilder::NodeT *> MarkerSRGBuilder::readVariable(const DefSite& var, BlockT *read, BlockT *start, const Intervals& covered) {
     assert( read );
     // use specialized method for unknown memory
     if (var.target == UNKNOWN_MEMORY) {
@@ -54,7 +54,7 @@ std::vector<MarkerSRGBuilderFS::NodeT *> MarkerSRGBuilderFS::readVariable(const 
     return result;
 }
 
-MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::addPhiOperands(const DefSite& var, NodeT *phi, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered) {
+MarkerSRGBuilder::NodeT *MarkerSRGBuilder::addPhiOperands(const DefSite& var, NodeT *phi, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered) {
 
     const auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
 
@@ -83,7 +83,7 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::addPhiOperands(const DefSite& var
     return tryRemoveTrivialPhi(phi);
 }
 
-MarkerSRGBuilderFS::NodeT* MarkerSRGBuilderFS::tryRemoveTrivialPhi(NodeT *phi) {
+MarkerSRGBuilder::NodeT* MarkerSRGBuilder::tryRemoveTrivialPhi(NodeT *phi) {
     auto operands = srg.find(phi);
     // is @phi undef?
     if (operands == srg.end()) {
@@ -126,7 +126,7 @@ MarkerSRGBuilderFS::NodeT* MarkerSRGBuilderFS::tryRemoveTrivialPhi(NodeT *phi) {
     return same;
 }
 
-void MarkerSRGBuilderFS::replacePhi(NodeT *phi, NodeT *replacement) {
+void MarkerSRGBuilder::replacePhi(NodeT *phi, NodeT *replacement) {
     // the purpose of this method is to reroute definitions to uses
     auto uses_it = reverse_srg.find(phi);
 
@@ -155,7 +155,7 @@ void MarkerSRGBuilderFS::replacePhi(NodeT *phi, NodeT *replacement) {
     }
 }
 
-MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSite& var, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered) {
+MarkerSRGBuilder::NodeT *MarkerSRGBuilder::readVariableRecursive(const DefSite& var, BlockT *block, BlockT *start, const std::vector<detail::Interval>& covered) {
     std::vector<NodeT *> result;
 
     auto interval = concretize(detail::Interval{var.offset, var.len}, var.target->getSize());
@@ -181,7 +181,7 @@ MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readVariableRecursive(const DefSi
   Only search until all variables are 'covered' or an allocation is found.
   Branching will be solved via phi nodes
 */
-MarkerSRGBuilderFS::NodeT *MarkerSRGBuilderFS::readUnknown(BlockT *read, std::unordered_map<NodeT *, detail::DisjointIntervalSet>& found) {
+MarkerSRGBuilder::NodeT *MarkerSRGBuilder::readUnknown(BlockT *read, std::unordered_map<NodeT *, detail::DisjointIntervalSet>& found) {
      std::vector<NodeT *> result;
 
     // try to find definitions of UNKNOWN_MEMORY in the current block.

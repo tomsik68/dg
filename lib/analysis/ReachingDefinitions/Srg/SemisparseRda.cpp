@@ -1,6 +1,6 @@
 #include "dg/analysis/ReachingDefinitions/SemisparseRda.h"
 
-#include "analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.h"
+#include "analysis/ReachingDefinitions/Srg/MarkerSRGBuilder.h"
 #include "analysis/ReachingDefinitions/Srg/SparseRDGraphBuilder.h"
 
 #include <unordered_set>
@@ -9,7 +9,7 @@ namespace dg {
 namespace analysis {
 namespace rd {
 
-using SrgBuilder = dg::analysis::rd::srg::MarkerSRGBuilderFS;
+using SrgBuilder = dg::analysis::rd::srg::MarkerSRGBuilder;
 using SparseRDGraph = dg::analysis::rd::srg::SparseRDGraph;
 
 template< typename T >

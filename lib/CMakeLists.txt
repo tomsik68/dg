@@ -32,12 +32,12 @@ add_library(RD SHARED
 	${CMAKE_SOURCE_DIR}/include/dg/analysis/ReachingDefinitions/ReachingDefinitions.h
 	${CMAKE_SOURCE_DIR}/include/dg/analysis/ReachingDefinitions/RDMap.h
 
-	analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.h
+	analysis/ReachingDefinitions/Srg/MarkerSRGBuilder.h
 
 	analysis/ReachingDefinitions/BasicRDMap.cpp
 	analysis/ReachingDefinitions/ReachingDefinitions.cpp
 	analysis/ReachingDefinitions/Srg/SemisparseRda.cpp
-	analysis/ReachingDefinitions/Srg/MarkerSRGBuilderFS.cpp
+	analysis/ReachingDefinitions/Srg/MarkerSRGBuilder.cpp
 )
 target_link_libraries(RD PUBLIC DGAnalysis)
 
